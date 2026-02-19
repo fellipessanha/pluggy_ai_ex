@@ -1,0 +1,74 @@
+# Pluggy AI - Demo Notebook
+
+```elixir
+Mix.install([
+  {:pluggy_ai, path: Path.join(__DIR__, "..")},
+  {:kino, "~> 0.14"}
+])
+```
+
+## Configuration
+
+Enter your Pluggy API credentials below.
+
+```elixir
+client_id_input = Kino.Input.text("Client ID")
+client_secret_input = Kino.Input.text("Client Secret", type: :password)
+
+Kino.Layout.grid([client_id_input, client_secret_input], columns: 2)
+```
+
+## Create Client
+
+This authenticates with the Pluggy API eagerly — if your credentials are wrong, you'll get an error here.
+
+```elixir
+client_id = Kino.Input.read(client_id_input)
+client_secret = Kino.Input.read(client_secret_input)
+
+{:ok, client} = Pluggy.Client.new(client_id, client_secret)
+```
+
+## List Connectors
+
+Fetch available connectors and display a simplified view.
+
+```elixir
+{:ok, connectors_response} = Pluggy.HTTP.get(client, "/connectors")
+
+connectors_simplified =
+  for %{name: name, id: id, products: products} <- connectors_response.results do
+    %{name: name, id: id, products: products}
+  end
+  |> Enum.sort_by(& &1.name)
+
+Kino.DataTable.new(connectors_simplified)
+```
+
+## Search Connectors
+
+Filter connectors by name.
+
+```elixir
+search_input = Kino.Input.text("Search connectors")
+```
+
+```elixir
+search_term = Kino.Input.read(search_input) |> String.downcase()
+
+connectors_simplified
+|> Enum.filter(fn %{name: name} ->
+  name |> String.downcase() |> String.contains?(search_term)
+end)
+|> Kino.DataTable.new()
+```
+
+## Connect Token
+
+Generate a connect token for the Pluggy Connect widget.
+
+```elixir
+{:ok, connect_token} = Pluggy.Client.connect_token(client)
+IO.puts("Connect token: #{String.slice(connect_token, 0, 40)}...")
+connect_token
+```

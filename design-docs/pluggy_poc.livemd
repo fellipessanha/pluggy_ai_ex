@@ -1,0 +1,252 @@
+# Untitled notebook
+
+```elixir
+Mix.install([
+  {:req, "~> 0.5.17"},
+  {:kino, "~> 0.18.0"}
+])
+```
+
+## Section
+
+```elixir
+pluggy_url = "https://api.pluggy.ai"
+baseline_headers = [accept: "application/json", "content-type": "application/json"]
+client_auth = %{
+  clientId: "8911d073-91d1-4cf7-bb57-726f46897b68",
+  clientSecret: "4ad9d3ce-c434-444c-8c22-debd5963dfbd",
+}
+
+base_req = Req.new(base_url: pluggy_url, headers: baseline_headers)
+```
+
+```elixir
+%Req.Response{
+  status: 200, headers: auth_headers, body: auth_response_body
+} =  Req.post!(base_req, url: "/auth", json: client_auth)
+```
+
+```elixir
+%{"apiKey" => auth_api_key} = auth_response_body
+authorized_headers = Keyword.put(baseline_headers,  String.to_atom("X-API-KEY"), auth_api_key)
+auth_req = Req.new(base_url: pluggy_url, headers: authorized_headers)
+```
+
+```elixir
+connectors_list = Req.get!(auth_req, url: "/connectors")
+```
+
+```elixir
+connectors_simplified = for %{
+  "name" => con_name, "id" => con_id, "products" => con_prods
+} <- connectors_list.body["results"],
+  do: %{name: con_name, id: con_id, products: con_prods}
+
+connectors_simplified |> Enum.sort(&(&1.name <= &2.name))
+```
+
+```elixir
+Enum.filter(
+  connectors_simplified,
+  fn %{name: con_name} -> con_name |> String.downcase |> String.contains?("plu") end)
+```
+
+```elixir
+%{"accessToken" => widget_token } = Req.post!(
+  auth_req,
+  url: "/connect_token",
+  json: %{
+  }).body
+```
+
+```elixir
+defmodule PluggyKino do
+  use Kino.JS
+  use Kino.JS.Live
+
+  def new(req_config) do
+    # Pass your Req configuration or initial state here
+    Kino.JS.Live.new(__MODULE__, req_config)
+  end
+
+  @impl true
+  def init(req_config, ctx) do
+    # You can store the Req config in the state to use it later
+    {:ok, assign(ctx, req_config: req_config)}
+  end
+
+  @impl true
+  def handle_connect(ctx) do
+    # When a user views the Kino, we generate the token immediately
+    # or you could trigger this via a button click.
+    {:ok, %{token: ctx.assigns.req_config.api_key}, ctx}
+  end
+
+  # Handle events sent from JS (e.g. onSuccess)
+  @impl true
+  def handle_event("connection_success", item_data, ctx) do
+    IO.inspect(item_data, label: "Pluggy Connection Success")
+    {:noreply, assign(ctx, item: item_data)}
+  end
+
+  @impl true
+  def handle_call("get_item", from, ctx) do
+    IO.inspect(from)
+    {:reply, ctx.assigns.item, ctx}
+  end
+
+  def handle_call("get_ctx", _, ctx) do
+    IO.inspect(ctx)
+    {:reply, ctx, ctx}
+  end
+
+  def handle_call("echo", _, ctx) do
+    IO.inspect("echoed")
+    {:reply, "hello", ctx}
+  end
+
+asset "main.js" do
+    """
+    export function init(ctx, data) {
+      // 1. Define a helper to load the script via a standard <script> tag
+      // This avoids the Strict Mode/Module issues with the UMD wrapper.
+      const loadPluggy = () => {
+        return new Promise((resolve, reject) => {
+          if (window.PluggyConnect) return resolve(); // Already loaded
+
+          const script = document.createElement("script");
+          script.src = "https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js";
+          script.async = true;
+          
+          script.onload = () => resolve();
+          script.onerror = (err) => reject(err);
+          
+          document.head.appendChild(script);
+        });
+      };
+
+      // 2. Handle errors passed from Elixir
+      if (data.error) {
+        ctx.root.innerHTML = `<div style="color: red;">Error: ${data.error}</div>`;
+        return;
+      }
+
+      // 3. Load script, then initialize widget
+      ctx.root.innerHTML = `
+        <div id="pluggy-container" style="height: 600px; border: 1px solid #eaeaea; border-radius: 8px;">
+          <div style="padding: 20px; font-family: sans-serif; color: #666;">
+            Loading Pluggy Connect...
+          </div>
+        </div>
+      `;
+
+      loadPluggy()
+        .then(() => {
+          // Initialize Pluggy once the script is loaded
+          const pluggyConnect = new window.PluggyConnect({
+            connectToken: data.token,
+            includeSandbox: true,
+            onSuccess: (itemData) => {
+              ctx.pushEvent("connection_success", itemData);
+            },
+            onError: (error) => {
+              console.error("Pluggy Connect error:", error);
+            },
+          });
+          
+          pluggyConnect.init();
+        })
+        .catch((err) => {
+          console.error("Failed to load Pluggy script", err);
+          ctx.root.innerHTML = `<div style="color: red;">Failed to load Pluggy script. Check console for details.</div>`;
+        });
+    }
+    """
+  end
+end
+```
+
+```elixir
+pluggy_item_js = PluggyKino.new(%{api_key: widget_token})
+```
+
+```elixir
+plugin_item = Kino.JS.Live.call(pluggy_item_js, "get_item")
+```
+
+```elixir
+item_id = plugin_item["item"]["id"]
+accounts_response = Req.get!(auth_req, url: "/accounts?itemId=#{item_id}")
+```
+
+```elixir
+account_ids = for result <- accounts_response.body["results"], do: Map.get(result, "id")
+```
+
+```elixir
+transactions = for account_id <- account_ids, do:
+  Req.get!(auth_req, url: "/transactions?accountId=#{account_id}").body
+  
+```
+
+```elixir
+flat_transactions = Enum.flat_map(transactions, fn %{"results" => x} -> x end)
+
+IO.inspect(transactions |> Enum.at(0) |> Map.get("results") |> length)
+IO.inspect(transactions |> Enum.at(1) |> Map.get("results") |> length)
+IO.inspect(flat_transactions |> length)
+
+```
+
+```elixir
+mapped_data = flat_transactions
+  |> Enum.filter(fn %{"paymentData" => data} -> !is_nil(data) end)
+|> Enum.map(fn %{
+  "amount" => amount,
+  "description" => description,
+  "paymentData" => data,
+  "date" => date
+} ->  %{amount: amount, description: description, payment_data: data, date: DateTime.from_iso8601(date) |> elem(1)} end)
+
+```
+
+```elixir
+day_31 = mapped_data 
+  |> Enum.filter(fn %{description: description} 
+    -> !String.contains?(description, "Júlia Robbs Moreira") end)
+  |> Enum.filter(&(Date.day_of_year(&1.date)) == 31)
+  |> Enum.reduce(%{}, fn x, acc -> 
+    Map.merge(acc, %{x.description => x}, fn _, v1, v2 -> %{v1 | amount: v2.amount + v1.amount} end)
+    end)
+
+```
+
+```elixir
+# donation_count = length(day_31)
+
+donations_total = day_31
+  |> Map.values
+  |> Enum.map(&(&1.amount))
+  |> Enum.sort
+  |> Enum.sum()
+IO.inspect(donations_total, label: "total arrecadado")
+```
+
+```elixir
+donation_count = day_31 |> Map.keys |> length
+donations_avg = donations_total / donation_count |> Float.round(2)
+IO.inspect(donations_avg, label: "média de doações")
+```
+
+```elixir
+sorted_donations = day_31 
+|> Map.values
+|> Enum.map(&(&1.amount))
+
+if div(donation_count, 2) == 1 do
+  Enum.at(sorted_donations, donation_count / 2)
+else
+  (Enum.at(sorted_donations, div(donation_count, 2))
+    + Enum.at(sorted_donations, div(donation_count, 2) - 1)) / 2
+end
+```
