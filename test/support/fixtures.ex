@@ -83,6 +83,19 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  def account_statements do
+    %{
+      "results" => [
+        %{
+          "id" => "stmt-uuid-001",
+          "accountId" => "account-uuid-001",
+          "date" => "2025-01-01T00:00:00.000Z",
+          "balance" => 1234.56
+        }
+      ]
+    }
+  end
+
   # --- Transactions ---
 
   def transactions do
