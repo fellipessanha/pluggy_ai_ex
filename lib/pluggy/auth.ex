@@ -98,7 +98,8 @@ defmodule Pluggy.Auth do
     auth_req =
       Req.new(
         base_url: base_url,
-        headers: [{"content-type", "application/json"}, {"accept", "application/json"}]
+        headers: [{"content-type", "application/json"}, {"accept", "application/json"}],
+        plug: req.options[:plug]
       )
 
     case Req.post(auth_req,
