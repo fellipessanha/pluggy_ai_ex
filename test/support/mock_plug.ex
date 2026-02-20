@@ -11,7 +11,7 @@ defmodule Pluggy.Test.MockPlug do
   @impl true
   def call(conn, _opts) do
     {:ok, body, conn} = read_body(conn)
-    body = if body != "", do: Jason.decode!(body), else: %{}
+    body = if body != "", do: JSON.decode!(body), else: %{}
 
     handle(conn, conn.method, conn.request_path, body)
   end
@@ -97,6 +97,6 @@ defmodule Pluggy.Test.MockPlug do
   defp send_json(conn, status, body) do
     conn
     |> put_resp_content_type("application/json")
-    |> send_resp(status, Jason.encode!(body))
+    |> send_resp(status, JSON.encode!(body))
   end
 end
