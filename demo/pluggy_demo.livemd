@@ -3,7 +3,7 @@
 ```elixir
 Mix.install([
   {:pluggy_ai, path: Path.join(__DIR__, "..")},
-  {:kino, "~> 0.14"}
+  {:kino, "~> 0.14"},
 ])
 ```
 
@@ -34,10 +34,10 @@ client_secret = Kino.Input.read(client_secret_input)
 Fetch available connectors and display a simplified view.
 
 ```elixir
-{:ok, connectors_response} = Pluggy.HTTP.get(client, "/connectors")
+{:ok, %{results: connectors}} = Pluggy.Connectors.list(client)
 
 connectors_simplified =
-  for %{name: name, id: id, products: products} <- connectors_response.results do
+  for %{name: name, id: id, products: products} <- connectors do
     %{name: name, id: id, products: products}
   end
   |> Enum.sort_by(& &1.name)
@@ -71,4 +71,20 @@ Generate a connect token for the Pluggy Connect widget.
 {:ok, connect_token} = Pluggy.Client.connect_token(client)
 IO.puts("Connect token: #{String.slice(connect_token, 0, 40)}...")
 connect_token
+```
+
+## Pluggy Connect Widget
+
+Render the Pluggy Connect widget inline. Select a bank and complete the connection flow.
+
+```elixir
+widget = Pluggy.Connect.Kino.new(connect_token: connect_token, include_sandbox: true)
+```
+
+## Connected Item
+
+After completing the connection above, run this cell to retrieve the item data.
+
+```elixir
+item = Pluggy.Connect.Kino.await_item(widget)
 ```
