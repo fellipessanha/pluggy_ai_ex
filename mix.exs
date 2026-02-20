@@ -8,6 +8,7 @@ defmodule PluggyAiEx.MixProject do
       elixir: "~> 1.19",
       name: "PluggyAI",
       description: "Elixir client library for the Pluggy API",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package()
@@ -20,10 +21,12 @@ defmodule PluggyAiEx.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   defp deps do
     [
       {:req, "~> 0.5"},
-      {:jason, "~> 1.4"},
       {:kino, "~> 0.14", optional: true},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:plug, "~> 1.16"},
