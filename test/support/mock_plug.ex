@@ -32,6 +32,23 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.connect_token())
   end
 
+  # --- Connectors ---
+
+  defp handle(conn, "GET", "/connectors", _body) do
+    send_json(conn, 200, Fixtures.connectors())
+  end
+
+  defp handle(conn, "GET", "/connectors/" <> id, _body) do
+    case String.split(id, "/") do
+      [_id, "validate"] -> send_json(conn, 200, Fixtures.connector_validation())
+      [_id] -> send_json(conn, 200, Fixtures.connector())
+    end
+  end
+
+  defp handle(conn, "POST", "/connectors/" <> _rest, _body) do
+    send_json(conn, 200, Fixtures.connector_validation())
+  end
+
   # --- Items ---
 
   defp handle(conn, "GET", "/items/" <> _id, _body) do

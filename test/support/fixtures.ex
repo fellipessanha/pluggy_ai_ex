@@ -20,6 +20,33 @@ defmodule Pluggy.Test.Fixtures do
     %{"accessToken" => "connect-token-xyz789"}
   end
 
+  # --- Connectors ---
+
+  def connectors do
+    %{
+      "results" => [connector()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def connector do
+    %{
+      "id" => 201,
+      "name" => "Test Bank",
+      "type" => "PERSONAL_BANK",
+      "country" => "BR",
+      "imageUrl" => "https://cdn.pluggy.ai/connectors/201.png",
+      "hasMFA" => false,
+      "health" => %{"status" => "ONLINE"}
+    }
+  end
+
+  def connector_validation do
+    %{"isValid" => true}
+  end
+
   # --- Items ---
 
   def item do
