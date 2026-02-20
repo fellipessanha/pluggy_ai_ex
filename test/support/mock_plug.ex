@@ -51,7 +51,23 @@ defmodule Pluggy.Test.MockPlug do
 
   # --- Items ---
 
+  defp handle(conn, "POST", "/items", _body) do
+    send_json(conn, 200, Fixtures.item())
+  end
+
+  defp handle(conn, "POST", "/items/" <> _rest, _body) do
+    send_json(conn, 200, Fixtures.item())
+  end
+
   defp handle(conn, "GET", "/items/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.item())
+  end
+
+  defp handle(conn, "PATCH", "/items/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.item())
+  end
+
+  defp handle(conn, "DELETE", "/items/" <> _id, _body) do
     send_json(conn, 200, Fixtures.item())
   end
 
@@ -61,8 +77,11 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.accounts())
   end
 
-  defp handle(conn, "GET", "/accounts/" <> _id, _body) do
-    send_json(conn, 200, Fixtures.account())
+  defp handle(conn, "GET", "/accounts/" <> rest, _body) do
+    case String.split(rest, "/") do
+      [_id, "statements"] -> send_json(conn, 200, Fixtures.account_statements())
+      [_id] -> send_json(conn, 200, Fixtures.account())
+    end
   end
 
   # --- Transactions ---
@@ -72,6 +91,10 @@ defmodule Pluggy.Test.MockPlug do
   end
 
   defp handle(conn, "GET", "/transactions/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.transaction())
+  end
+
+  defp handle(conn, "PATCH", "/transactions/" <> _id, _body) do
     send_json(conn, 200, Fixtures.transaction())
   end
 
