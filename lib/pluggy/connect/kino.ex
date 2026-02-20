@@ -1,26 +1,26 @@
-defmodule Pluggy.Connect.Kino do
-  @moduledoc """
-  Pluggy Connect widget for Livebook using `Kino.JS.Live`.
+if Code.ensure_loaded?(Kino.JS.Live) do
+  defmodule Pluggy.Connect.Kino do
+    @moduledoc """
+    Pluggy Connect widget for Livebook using `Kino.JS.Live`.
 
-  Renders the Pluggy Connect widget inline in a Livebook cell and
-  pushes the connected item data back to Elixir when the user
-  completes the connection flow.
+    Renders the Pluggy Connect widget inline in a Livebook cell and
+    pushes the connected item data back to Elixir when the user
+    completes the connection flow.
 
-  ## Usage
+    ## Usage
 
-      {:ok, client} = Pluggy.Client.new("client_id", "client_secret")
-      {:ok, token} = Pluggy.Client.connect_token(client)
+        {:ok, client} = Pluggy.Client.new("client_id", "client_secret")
+        {:ok, token} = Pluggy.Client.connect_token(client)
 
-      widget = Pluggy.Connect.Kino.new(connect_token: token)
+        widget = Pluggy.Connect.Kino.new(connect_token: token)
 
-  After the user connects a bank account in the widget:
+    After the user connects a bank account in the widget:
 
-      item = Pluggy.Connect.Kino.await_item(widget)
+        item = Pluggy.Connect.Kino.await_item(widget)
 
-  Requires the `:kino` dependency.
-  """
+    Requires the `:kino` dependency.
+    """
 
-  if Code.ensure_loaded?(Kino.JS.Live) do
     use Kino.JS
     use Kino.JS.Live
 
@@ -109,7 +109,9 @@ defmodule Pluggy.Connect.Kino do
       }
       """
     end
-  else
+  end
+else
+  defmodule Pluggy.Connect.Kino do
     def new(_opts) do
       raise "#{__MODULE__} requires the :kino dependency"
     end
