@@ -142,6 +142,20 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  def investment_transactions do
+    %{
+      "results" => [
+        %{
+          "id" => "inv-txn-uuid-001",
+          "investmentId" => "inv-uuid-001",
+          "date" => "2025-01-15T00:00:00.000Z",
+          "amount" => 500.0,
+          "type" => "BUY"
+        }
+      ]
+    }
+  end
+
   # --- Identity ---
 
   def identity do
