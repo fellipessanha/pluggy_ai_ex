@@ -1,7 +1,7 @@
 if Code.ensure_loaded?(Phoenix.LiveView) do
   defmodule Pluggy.Connect.Live do
     @moduledoc """
-    Phoenix LiveComponent for the Pluggy Connect widget.
+    Function component for the Pluggy Connect widget in Phoenix LiveView.
 
     Renders the Pluggy Connect widget inside a LiveView. When the user
     completes the connection flow, a `"pluggy:connected"` event is pushed
@@ -11,15 +11,14 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     In your LiveView template:
 
-        <.live_component
-          module={Pluggy.Connect.Live}
+        <Pluggy.Connect.Live.connect_widget
           id="pluggy-connect"
           connect_token={@connect_token}
         />
 
     In your LiveView:
 
-        def handle_info({"pluggy:connected", item_data}, socket) do
+        def handle_event("pluggy:connected", item_data, socket) do
           # item_data contains the connected item
           {:noreply, assign(socket, :item, item_data)}
         end
@@ -34,27 +33,24 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
 
     Requires the `:phoenix_live_view` dependency.
     """
-    use Phoenix.LiveComponent
+    use Phoenix.Component
 
-    @impl true
-    def update(assigns, socket) do
-      opts = [
-        connect_token: assigns[:connect_token],
-        include_sandbox: assigns[:include_sandbox] || false
-      ]
+    @doc """
+    Renders the Pluggy Connect widget container.
 
-      normalized = Pluggy.Connect.normalize_opts(opts)
+    ## Attributes
 
-      {:ok,
-       socket
-       |> assign(:id, assigns.id)
-       |> assign(:connect_token, normalized.connect_token)
-       |> assign(:include_sandbox, normalized.include_sandbox)
-       |> assign(:cdn_url, Pluggy.Connect.cdn_url())}
-    end
+      * `:id` (required) — unique DOM element ID
+      * `:connect_token` (required) — the connect token from `Pluggy.Client.connect_token/2`
+      * `:include_sandbox` — whether to show sandbox connectors (default `false`)
+    """
+    attr(:id, :string, required: true)
+    attr(:connect_token, :string, required: true)
+    attr(:include_sandbox, :boolean, default: false)
 
-    @impl true
-    def render(assigns) do
+    def connect_widget(assigns) do
+      assigns = assign(assigns, :cdn_url, Pluggy.Connect.cdn_url())
+
       ~H"""
       <div
         id={@id}
@@ -70,7 +66,9 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
   end
 else
   defmodule Pluggy.Connect.Live do
-    def render(_assigns) do
+    @moduledoc false
+
+    def connect_widget(_assigns) do
       raise "#{__MODULE__} requires the :phoenix_live_view dependency"
     end
   end

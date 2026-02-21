@@ -3,7 +3,7 @@ defmodule Pluggy.Connect do
   Shared configuration and JavaScript for Pluggy Connect widgets.
 
   This module provides the common layer used by both `Pluggy.Connect.Kino`
-  (Livebook) and `Pluggy.Connect.Live` (Phoenix LiveComponent) to embed
+  (Livebook) and `Pluggy.Connect.Live` (Phoenix function component) to embed
   the Pluggy Connect widget.
 
   ## Options
