@@ -25,18 +25,17 @@ defmodule Pluggy.ClientTest do
 
     test "returns error on auth failure" do
       result =
-        Client.new("bad_id", "bad_secret",
-          req_options: [plug: @mock_plug]
-        )
+        Client.new("bad_id", "bad_secret", req_options: [plug: @mock_plug])
 
       assert {:error, %Pluggy.Error{code: :auth_failed}} = result
     end
 
     test "accepts custom base_url" do
-      {:ok, client} = Client.new("test_id", "test_secret",
-        base_url: "https://custom.api.example.com",
-        req_options: [plug: @mock_plug]
-      )
+      {:ok, client} =
+        Client.new("test_id", "test_secret",
+          base_url: "https://custom.api.example.com",
+          req_options: [plug: @mock_plug]
+        )
 
       assert client.req.options[:base_url] == "https://custom.api.example.com"
     end

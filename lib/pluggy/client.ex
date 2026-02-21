@@ -94,9 +94,18 @@ defmodule Pluggy.Client do
       |> Map.take([:item_id, :options])
 
     case Pluggy.HTTP.post(client, "/connect_token", json: body) do
-      {:ok, %{access_token: token}} -> {:ok, token}
-      {:ok, response} -> {:error, %Pluggy.Error{code: :unexpected, message: "Unexpected connect_token response: #{inspect(response)}"}}
-      {:error, _} = error -> error
+      {:ok, %{access_token: token}} ->
+        {:ok, token}
+
+      {:ok, response} ->
+        {:error,
+         %Pluggy.Error{
+           code: :unexpected,
+           message: "Unexpected connect_token response: #{inspect(response)}"
+         }}
+
+      {:error, _} = error ->
+        error
     end
   end
 

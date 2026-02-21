@@ -47,14 +47,18 @@ defmodule Pluggy.TransactionsTest do
   describe "update/3" do
     test "updates a transaction" do
       client = build_client()
-      assert {:ok, %{id: "txn-uuid-001"}} = Transactions.update(client, "txn-uuid-001", %{category_id: "cat-002"})
+
+      assert {:ok, %{id: "txn-uuid-001"}} =
+               Transactions.update(client, "txn-uuid-001", %{category_id: "cat-002"})
     end
   end
 
   describe "update!/3" do
     test "returns unwrapped result" do
       client = build_client()
-      assert %{id: "txn-uuid-001"} = Transactions.update!(client, "txn-uuid-001", %{category_id: "cat-002"})
+
+      assert %{id: "txn-uuid-001"} =
+               Transactions.update!(client, "txn-uuid-001", %{category_id: "cat-002"})
     end
   end
 end
