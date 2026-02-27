@@ -13,7 +13,8 @@ defmodule Pluggy.Unwrap do
     * `with_cursor/2` — current page results + a cursor to the next page
 
   All functions accept `{:ok, body}` or `{:error, reason}` tuples and
-  propagate errors unchanged.
+  propagate errors unchanged. `results/1` also accepts a bare
+  `%Req.Response{}` struct for convenience.
 
   ## Req plugin
 
@@ -23,7 +24,6 @@ defmodule Pluggy.Unwrap do
 
   alias Pluggy.Error
   require Logger
-  require IEx
 
   @typedoc "A paginated API response body."
   @type paginated :: %{
@@ -45,6 +45,7 @@ defmodule Pluggy.Unwrap do
   @doc """
   Extracts the `:results` list from a paginated response.
 
+  Accepts `{:ok, body}`, `{:error, reason}`, or a bare `%Req.Response{}`.
   Returns the body unchanged when it is not a paginated map.
 
   ## Examples
@@ -55,10 +56,15 @@ defmodule Pluggy.Unwrap do
       iex> Pluggy.Unwrap.results({:ok, %{id: "single"}})
       {:ok, %{id: "single"}}
 
+      iex> Pluggy.Unwrap.results(%Req.Response{status: 200, body: %{results: [1, 2], page: 1, total_pages: 1, total: 2}})
+      {:ok, [1, 2]}
+
       iex> Pluggy.Unwrap.results({:error, %Pluggy.Error{code: 500, message: "boom"}})
       {:error, %Pluggy.Error{code: 500, message: "boom"}}
   """
-  @spec results({:ok, map()} | {:error, term()}) :: {:ok, list() | term()} | {:error, term()}
+  @spec results(Req.Response.t() | {:ok, map()} | {:error, term()}) ::
+          {:ok, list() | term()} | {:error, term()}
+  def results(%Req.Response{} = response), do: results({:ok, response.body})
   def results({:ok, body}) when is_paginated(body), do: {:ok, body.results}
   def results({:ok, _body} = ok), do: ok
   def results({:error, _} = error), do: error
@@ -101,8 +107,11 @@ defmodule Pluggy.Unwrap do
   @spec result!({:ok, term()} | {:error, term()}) :: term()
   def result!(response) do
     case result(response) do
-      {:ok, value} -> value
-      {:error, %Error{} = error} -> raise RuntimeError, "Pluggy API error: #{error.message} (code: #{error.code})"
+      {:ok, value} ->
+        value
+
+      {:error, %Error{} = error} ->
+        raise RuntimeError, "Pluggy API error: #{error.message} (code: #{error.code})"
     end
   end
 
@@ -133,10 +142,9 @@ defmodule Pluggy.Unwrap do
     |> Req.Request.append_response_steps(pluggy_unwrap: &unwrap_step/1)
   end
 
-  defp unwrap_step({req, %Req.Response{status: status, body: body} = response})
+  defp unwrap_step({req, %Req.Response{status: status, body: _body} = response})
        when status in 200..299 do
-    IEx.pry()
-    case apply_mode(req.options[:pluggy_unwrap_mode], body) do
+    case apply_mode(req.options[:pluggy_unwrap_mode], response) do
       {:ok, unwrapped} -> {req, %{response | body: unwrapped}}
       _ -> {req, response}
     end
@@ -144,5 +152,5 @@ defmodule Pluggy.Unwrap do
 
   defp unwrap_step({req, response}), do: {req, response}
 
-  defp apply_mode(:results, body), do: results({:ok, body})
+  defp apply_mode(:results, %Req.Response{} = response), do: results(response)
 end
