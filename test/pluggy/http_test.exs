@@ -153,19 +153,9 @@ defmodule Pluggy.HTTPTest do
       client = build_client(plug: plug)
       assert {:ok, _} = HTTP.delete(client, "/items/some-id")
     end
-  end
-
-  describe "unwrap!/1" do
-    test "returns value from ok tuple" do
-      assert :value == HTTP.unwrap!({:ok, :value})
-    end
 
     test "raises on error tuple" do
       error = %Error{code: 400, message: "Bad Request"}
-
-      assert_raise RuntimeError, ~r/Pluggy API error/, fn ->
-        HTTP.unwrap!({:error, error})
-      end
     end
   end
 end

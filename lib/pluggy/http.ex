@@ -44,16 +44,6 @@ defmodule Pluggy.HTTP do
     request(client, :delete, path, opts)
   end
 
-  @doc """
-  Unwraps an `{:ok, result}` tuple or raises on `{:error, error}`.
-  """
-  @spec unwrap!({:ok, term()} | {:error, Error.t()}) :: term()
-  def unwrap!({:ok, result}), do: result
-
-  def unwrap!({:error, %Error{} = error}) do
-    raise RuntimeError, "Pluggy API error: #{error.message} (code: #{error.code})"
-  end
-
   # -- Private --
 
   defp request(%Client{req: req}, method, path, opts) do

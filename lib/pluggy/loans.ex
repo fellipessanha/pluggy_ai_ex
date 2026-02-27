@@ -3,7 +3,7 @@ defmodule Pluggy.Loans do
   Functions for interacting with the Pluggy Loans API.
   """
 
-  alias Pluggy.{Client, HTTP}
+  alias Pluggy.{Client, HTTP, Unwrap}
 
   @doc """
   Lists loans for a given item.
@@ -15,7 +15,7 @@ defmodule Pluggy.Loans do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, item_id, opts \\ []),
-    do: HTTP.unwrap!(list(client, item_id, opts))
+    do: Unwrap.result!(list(client, item_id, opts))
 
   @doc """
   Gets a loan by ID.
@@ -26,5 +26,5 @@ defmodule Pluggy.Loans do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: HTTP.unwrap!(get(client, id))
+  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
 end
