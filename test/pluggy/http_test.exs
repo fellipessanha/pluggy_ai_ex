@@ -153,9 +153,5 @@ defmodule Pluggy.HTTPTest do
       client = build_client(plug: plug)
       assert {:ok, _} = HTTP.delete(client, "/items/some-id")
     end
-
-    test "raises on error tuple" do
-      error = %Error{code: 400, message: "Bad Request"}
-    end
   end
 end

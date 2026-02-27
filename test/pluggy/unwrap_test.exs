@@ -2,6 +2,7 @@ defmodule Pluggy.UnwrapTest do
   use ExUnit.Case, async: true
 
   alias Pluggy.Unwrap
+  alias Pluggy.Error
 
   describe "results/1" do
     test "extracts items from a paginated response" do
@@ -63,6 +64,14 @@ defmodule Pluggy.UnwrapTest do
 
       assert {:ok, %{results: [%{id: "stmt-uuid-001"}]}} =
                Pluggy.Accounts.statements(client, "account-uuid-001")
+    end
+  end
+
+  test "raises on error tuple" do
+    error = %Error{code: 400, message: "Bad Request"}
+
+    assert_raise RuntimeError, ~r/Pluggy API error/, fn ->
+      Unwrap.result!({:error, error})
     end
   end
 end
