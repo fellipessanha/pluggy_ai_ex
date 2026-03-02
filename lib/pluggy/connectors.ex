@@ -6,6 +6,7 @@ defmodule Pluggy.Connectors do
   """
 
   alias Pluggy.{Client, HTTP, Unwrap}
+  @prefix_url "/connectors"
 
   @doc """
   Lists available connectors.
@@ -24,7 +25,7 @@ defmodule Pluggy.Connectors do
   """
   @spec list(Client.t(), keyword()) :: {:ok, map()} | {:error, Pluggy.Error.t()}
   def list(%Client{} = client, opts \\ []) do
-    HTTP.get(client, "/connectors", params: opts)
+    HTTP.get(client, @prefix_url, params: opts)
   end
 
   @spec list!(Client.t(), keyword()) :: map()
@@ -52,7 +53,7 @@ defmodule Pluggy.Connectors do
   @spec list_with_cursor(Client.t(), keyword()) ::
           {:ok, map(), non_neg_integer() | nil} | {:error, Pluggy.Error.t()}
   def list_with_cursor(%Client{} = client, opts \\ []) do
-    case HTTP.get(client, "/connectors", params: opts) do
+    case HTTP.get(client, @prefix_url, params: opts) do
       {:ok, %{page: page, total_pages: total_pages} = response} when page < total_pages ->
         {:ok, response, page + 1}
 
@@ -75,7 +76,7 @@ defmodule Pluggy.Connectors do
   """
   @spec get(Client.t(), integer(), keyword()) :: {:ok, map()} | {:error, Pluggy.Error.t()}
   def get(%Client{} = client, id, opts \\ []) do
-    HTTP.get(client, "/connectors/#{id}", params: opts)
+    HTTP.get(client, "#{@prefix_url}/#{id}", params: opts)
   end
 
   @spec get!(Client.t(), integer(), keyword()) :: map()
@@ -88,7 +89,7 @@ defmodule Pluggy.Connectors do
   """
   @spec validate(Client.t(), integer(), map()) :: {:ok, map()} | {:error, Pluggy.Error.t()}
   def validate(%Client{} = client, id, params) do
-    HTTP.post(client, "/connectors/#{id}/validate", json: params)
+    HTTP.post(client, "#{@prefix_url}/#{id}/validate", json: params)
   end
 
   @spec validate!(Client.t(), integer(), map()) :: map()
