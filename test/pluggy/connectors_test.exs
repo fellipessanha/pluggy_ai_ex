@@ -64,6 +64,65 @@ defmodule Pluggy.ConnectorsTest do
     end
   end
 
+  describe "list_with_cursor/1" do
+    test "returns results with nil cursor when on last page" do
+      client = build_client()
+
+      assert {:ok, %{results: [%{id: 201, name: "Test Bank"}]}, nil} =
+               Connectors.list_with_cursor(client)
+    end
+
+    test "returns results with next page number when more pages exist" do
+      plug = fn conn ->
+        case {conn.method, conn.request_path} do
+          {"POST", "/auth"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(200, JSON.encode!(%{"apiKey" => "k"}))
+
+          {"GET", "/connectors"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(
+              200,
+              JSON.encode!(%{
+                "results" => [%{"id" => 201, "name" => "Test Bank"}],
+                "total" => 2,
+                "totalPages" => 3,
+                "page" => 1
+              })
+            )
+        end
+      end
+
+      {:ok, client} = Pluggy.Client.new("test_id", "test_secret", req_options: [plug: plug])
+
+      assert {:ok, %{results: [%{id: 201, name: "Test Bank"}]}, 2} =
+               Connectors.list_with_cursor(client)
+    end
+
+    test "returns error on failure" do
+      plug = fn conn ->
+        case {conn.method, conn.request_path} do
+          {"POST", "/auth"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(200, JSON.encode!(%{"apiKey" => "k"}))
+
+          {"GET", "/connectors"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(500, JSON.encode!(%{"message" => "Internal error"}))
+        end
+      end
+
+      {:ok, client} =
+        Pluggy.Client.new("test_id", "test_secret", req_options: [plug: plug, retry: false])
+
+      assert {:error, _} = Connectors.list_with_cursor(client)
+    end
+  end
+
   describe "validate/3" do
     test "validates connector credentials" do
       client = build_client()

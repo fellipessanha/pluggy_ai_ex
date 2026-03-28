@@ -5,7 +5,7 @@ defmodule Pluggy.Items do
   An item represents a connection to a financial institution.
   """
 
-  alias Pluggy.{Client, HTTP}
+  alias Pluggy.{Client, HTTP, Unwrap}
 
   @doc """
   Creates a new item (connection to a financial institution).
@@ -16,7 +16,7 @@ defmodule Pluggy.Items do
   end
 
   @spec create!(Client.t(), map()) :: term()
-  def create!(%Client{} = client, attrs), do: HTTP.unwrap!(create(client, attrs))
+  def create!(%Client{} = client, attrs), do: Unwrap.result!(create(client, attrs))
 
   @doc """
   Gets an item by ID.
@@ -27,7 +27,7 @@ defmodule Pluggy.Items do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: HTTP.unwrap!(get(client, id))
+  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
 
   @doc """
   Updates an item.
@@ -38,7 +38,7 @@ defmodule Pluggy.Items do
   end
 
   @spec update!(Client.t(), String.t(), map()) :: term()
-  def update!(%Client{} = client, id, attrs), do: HTTP.unwrap!(update(client, id, attrs))
+  def update!(%Client{} = client, id, attrs), do: Unwrap.result!(update(client, id, attrs))
 
   @doc """
   Deletes an item.
@@ -49,7 +49,7 @@ defmodule Pluggy.Items do
   end
 
   @spec delete!(Client.t(), String.t()) :: term()
-  def delete!(%Client{} = client, id), do: HTTP.unwrap!(delete(client, id))
+  def delete!(%Client{} = client, id), do: Unwrap.result!(delete(client, id))
 
   @doc """
   Sends MFA (multi-factor authentication) response for an item.
@@ -60,7 +60,7 @@ defmodule Pluggy.Items do
   end
 
   @spec send_mfa!(Client.t(), String.t(), map()) :: term()
-  def send_mfa!(%Client{} = client, id, params), do: HTTP.unwrap!(send_mfa(client, id, params))
+  def send_mfa!(%Client{} = client, id, params), do: Unwrap.result!(send_mfa(client, id, params))
 
   @doc """
   Disables automatic sync for an item.
@@ -72,5 +72,5 @@ defmodule Pluggy.Items do
 
   @spec disable_auto_sync!(Client.t(), String.t()) :: term()
   def disable_auto_sync!(%Client{} = client, id),
-    do: HTTP.unwrap!(disable_auto_sync(client, id))
+    do: Unwrap.result!(disable_auto_sync(client, id))
 end

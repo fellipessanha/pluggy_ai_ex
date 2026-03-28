@@ -3,6 +3,12 @@ defmodule Pluggy.HTTP do
 
   alias Pluggy.{Client, Error, KeyTransform}
 
+  @doc false
+  defguard is_paginated(body)
+           when is_map_key(body, :results) and
+                  is_map_key(body, :page) and
+                  is_map_key(body, :total_pages)
+
   @doc """
   Performs a GET request.
 
@@ -44,16 +50,6 @@ defmodule Pluggy.HTTP do
     request(client, :delete, path, opts)
   end
 
-  @doc """
-  Unwraps an `{:ok, result}` tuple or raises on `{:error, error}`.
-  """
-  @spec unwrap!({:ok, term()} | {:error, Error.t()}) :: term()
-  def unwrap!({:ok, result}), do: result
-
-  def unwrap!({:error, %Error{} = error}) do
-    raise RuntimeError, "Pluggy API error: #{error.message} (code: #{error.code})"
-  end
-
   # -- Private --
 
   defp request(%Client{req: req}, method, path, opts) do
@@ -79,6 +75,12 @@ defmodule Pluggy.HTTP do
         {:error, Error.transport(Exception.message(exception))}
     end
   end
+
+  def has_next_page?(%Req.Response{body: %{page: page, total_pages: total_pages}} = response)
+      when is_paginated(response.body),
+      do: page < total_pages
+
+  def has_next_page?(_), do: false
 
   defp convert_params(opts) do
     case Keyword.pop(opts, :params) do

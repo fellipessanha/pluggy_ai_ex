@@ -3,7 +3,7 @@ defmodule Pluggy.Transactions do
   Functions for interacting with the Pluggy Transactions API.
   """
 
-  alias Pluggy.{Client, HTTP}
+  alias Pluggy.{Client, HTTP, Unwrap}
 
   @doc """
   Lists transactions for a given account.
@@ -22,7 +22,7 @@ defmodule Pluggy.Transactions do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, account_id, opts \\ []),
-    do: HTTP.unwrap!(list(client, account_id, opts))
+    do: Unwrap.result!(list(client, account_id, opts))
 
   @doc """
   Gets a transaction by ID.
@@ -33,7 +33,7 @@ defmodule Pluggy.Transactions do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: HTTP.unwrap!(get(client, id))
+  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
 
   @doc """
   Updates a transaction (e.g. to change its category).
@@ -44,5 +44,5 @@ defmodule Pluggy.Transactions do
   end
 
   @spec update!(Client.t(), String.t(), map()) :: term()
-  def update!(%Client{} = client, id, attrs), do: HTTP.unwrap!(update(client, id, attrs))
+  def update!(%Client{} = client, id, attrs), do: Unwrap.result!(update(client, id, attrs))
 end
