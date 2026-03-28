@@ -23,6 +23,17 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
           {:noreply, assign(socket, :item, item_data)}
         end
 
+    ### Resolving a token from a client
+
+    Use `Pluggy.Client.connect_token/1` in your LiveView to generate the
+    token before passing it to the component:
+
+        def mount(_params, _session, socket) do
+          {:ok, client} = Pluggy.Client.new("id", "secret")
+          {:ok, token} = Pluggy.Client.connect_token(client)
+          {:ok, assign(socket, :connect_token, token)}
+        end
+
     On the client side, add the hook to your LiveSocket:
 
         import { createPluggyConnectHook } from "pluggy_ai/priv/static/pluggy_connect_hook.js"

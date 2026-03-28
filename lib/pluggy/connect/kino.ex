@@ -9,10 +9,15 @@ if Code.ensure_loaded?(Kino.JS.Live) do
 
     ## Usage
 
-        {:ok, client} = Pluggy.Client.new("client_id", "client_secret")
-        {:ok, token} = Pluggy.Client.connect_token(client)
+    With a client (generates the connect token automatically):
 
-        widget = Pluggy.Connect.Kino.new(connect_token: token)
+        {:ok, client} = Pluggy.Client.new("client_id", "client_secret")
+        widget = Pluggy.Connect.Kino.new(client, include_sandbox: true)
+
+    Or with an existing connect token:
+
+        {:ok, token} = Pluggy.Client.connect_token(client)
+        widget = Pluggy.Connect.Kino.new(token, include_sandbox: true)
 
     After the user connects a bank account in the widget:
 
@@ -29,12 +34,29 @@ if Code.ensure_loaded?(Kino.JS.Live) do
 
     ## Options
 
-      * `:connect_token` (required) — the connect token
       * `:include_sandbox` — show sandbox connectors (default `false`)
+
+    ## Examples
+
+        widget = Pluggy.Connect.Kino.new(client)
+        widget = Pluggy.Connect.Kino.new(client, include_sandbox: true)
+        widget = Pluggy.Connect.Kino.new("connect_token_string")
+
     """
-    def new(opts) do
-      normalized = Pluggy.Connect.normalize_opts(opts)
-      Kino.JS.Live.new(__MODULE__, normalized)
+    def new(token_or_client, opts \\ [])
+
+    def new(token, opts) when is_binary(token) do
+      init_data = %{
+        connect_token: token,
+        include_sandbox: Keyword.get(opts, :include_sandbox, false)
+      }
+
+      Kino.JS.Live.new(__MODULE__, init_data)
+    end
+
+    def new(%Pluggy.Client{} = client, opts) do
+      {:ok, token} = Pluggy.Client.connect_token(client)
+      new(token, opts)
     end
 
     @doc """
@@ -112,7 +134,7 @@ if Code.ensure_loaded?(Kino.JS.Live) do
   end
 else
   defmodule Pluggy.Connect.Kino do
-    def new(_opts) do
+    def new(_token, _opts \\ []) do
       raise "#{__MODULE__} requires the :kino dependency"
     end
 

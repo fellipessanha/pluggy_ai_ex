@@ -77,8 +77,10 @@ connect_token
 
 Render the Pluggy Connect widget inline. Select a bank and complete the connection flow.
 
+You can pass a `:client` directly — the widget generates the token for you:
+
 ```elixir
-widget = Pluggy.Connect.Kino.new(connect_token: connect_token, include_sandbox: true)
+widget = Pluggy.Connect.Kino.new(client, include_sandbox: true)
 ```
 
 ## Connected Item

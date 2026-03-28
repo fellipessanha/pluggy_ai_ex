@@ -6,10 +6,16 @@ defmodule Pluggy.Connect do
   (Livebook) and `Pluggy.Connect.Live` (Phoenix function component) to embed
   the Pluggy Connect widget.
 
-  ## Options
+  ## Usage
 
-    * `:connect_token` (required) — the connect token from `Pluggy.Client.connect_token/2`
-    * `:include_sandbox` — whether to show sandbox connectors (default `false`)
+  Widget entry points accept either a `%Pluggy.Client{}` or a connect token
+  string as the first argument, plus an optional keyword list:
+
+      # With a client (generates the token automatically)
+      Pluggy.Connect.Kino.new(client, include_sandbox: true)
+
+      # With an existing token
+      Pluggy.Connect.Kino.new(token, include_sandbox: true)
   """
 
   @cdn_url "https://cdn.pluggy.ai/pluggy-connect/v2.8.2/pluggy-connect.js"
@@ -19,34 +25,6 @@ defmodule Pluggy.Connect do
   """
   @spec cdn_url() :: String.t()
   def cdn_url, do: @cdn_url
-
-  @doc """
-  Validates and normalizes widget keyword options into a map.
-
-  ## Examples
-
-      iex> Pluggy.Connect.normalize_opts(connect_token: "tok_abc")
-      %{connect_token: "tok_abc", include_sandbox: false}
-
-      iex> Pluggy.Connect.normalize_opts(connect_token: "tok_abc", include_sandbox: true)
-      %{connect_token: "tok_abc", include_sandbox: true}
-
-  """
-  @spec normalize_opts(keyword()) :: map()
-  def normalize_opts(opts) when is_list(opts) do
-    token =
-      Keyword.get(opts, :connect_token) ||
-        raise ArgumentError, ":connect_token is required"
-
-    unless is_binary(token) do
-      raise ArgumentError, ":connect_token must be a string, got: #{inspect(token)}"
-    end
-
-    %{
-      connect_token: token,
-      include_sandbox: Keyword.get(opts, :include_sandbox, false)
-    }
-  end
 
   @doc """
   Returns the shared JavaScript string for loading the Pluggy Connect SDK
