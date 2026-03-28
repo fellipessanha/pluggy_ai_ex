@@ -1,8 +1,8 @@
 defmodule Pluggy.UnwrapTest do
   use ExUnit.Case, async: true
 
-  alias Pluggy.Unwrap
   alias Pluggy.Error
+  alias Pluggy.Unwrap
 
   describe "results/1" do
     test "extracts items from a paginated response" do
