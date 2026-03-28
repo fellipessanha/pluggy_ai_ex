@@ -28,6 +28,7 @@ if Code.ensure_loaded?(Kino.JS.Live) do
 
     use Kino.JS
     use Kino.JS.Live
+    alias Kino.JS.Live
 
     @doc """
     Creates a new Pluggy Connect widget.
@@ -51,7 +52,7 @@ if Code.ensure_loaded?(Kino.JS.Live) do
         include_sandbox: Keyword.get(opts, :include_sandbox, false)
       }
 
-      Kino.JS.Live.new(__MODULE__, init_data)
+      Live.new(__MODULE__, init_data)
     end
 
     def new(%Pluggy.Client{} = client, opts) do
@@ -63,7 +64,7 @@ if Code.ensure_loaded?(Kino.JS.Live) do
     Blocks until the user completes the widget connection and returns the item data.
     """
     def await_item(widget) do
-      Kino.JS.Live.call(widget, "get_item")
+      Live.call(widget, "get_item")
     end
 
     @impl true
@@ -91,7 +92,7 @@ if Code.ensure_loaded?(Kino.JS.Live) do
           {:noreply, ctx}
 
         from ->
-          Kino.JS.Live.reply(from, item_data)
+          Live.reply(from, item_data)
           {:noreply, assign(ctx, waiting: nil)}
       end
     end
