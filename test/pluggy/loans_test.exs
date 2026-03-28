@@ -32,7 +32,7 @@ defmodule Pluggy.LoansTest do
     test "returns a loan by id" do
       client = build_client()
 
-      assert {:ok, %{id: "loan-uuid-001", total_amount: 10000.0}} =
+      assert {:ok, %{id: "loan-uuid-001", total_amount: 10_000.0}} =
                Loans.get(client, "loan-uuid-001")
     end
   end
