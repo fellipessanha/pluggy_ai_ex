@@ -186,7 +186,7 @@ defmodule Pluggy.Test.Fixtures do
       "itemId" => "item-uuid-001",
       "contractNumber" => "ABC-123",
       "type" => "PERSONAL_LOAN",
-      "totalAmount" => 10000.0,
+      "totalAmount" => 10_000.0,
       "currencyCode" => "BRL"
     }
   end

@@ -134,6 +134,11 @@ if Code.ensure_loaded?(Kino.JS.Live) do
   end
 else
   defmodule Pluggy.Connect.Kino do
+    @moduledoc """
+    Pluggy Connect widget for Livebook using `Kino.JS.Live`.
+
+    Requires the `:kino` dependency.
+    """
     def new(_token, _opts \\ []) do
       raise "#{__MODULE__} requires the :kino dependency"
     end
