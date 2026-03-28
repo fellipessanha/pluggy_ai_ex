@@ -32,7 +32,8 @@ defmodule PluggyAiEx.MixProject do
       {:plug, "~> 1.16"},
       # dev/test
       {:bandit, "~> 1.0", only: :test},
-      {:ex_doc, "~> 0.34", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
