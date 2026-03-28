@@ -5,12 +5,14 @@ defmodule Pluggy.Loans do
 
   alias Pluggy.{Client, HTTP, Unwrap}
 
+  @prefix_url "/loans"
+
   @doc """
   Lists loans for a given item.
   """
   @spec list(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def list(%Client{} = client, item_id, opts \\ []) do
-    HTTP.get(client, "/loans", params: [item_id: item_id] ++ opts)
+    HTTP.get(client, "#{@prefix_url}", params: [item_id: item_id] ++ opts)
   end
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
@@ -22,7 +24,7 @@ defmodule Pluggy.Loans do
   """
   @spec get(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def get(%Client{} = client, id) do
-    HTTP.get(client, "/loans/#{id}")
+    HTTP.get(client, "#{@prefix_url}/#{id}")
   end
 
   @spec get!(Client.t(), String.t()) :: term()

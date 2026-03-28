@@ -5,12 +5,14 @@ defmodule Pluggy.Investments do
 
   alias Pluggy.{Client, HTTP, Unwrap}
 
+  @prefix_url "/investments"
+
   @doc """
   Lists investments for a given item.
   """
   @spec list(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def list(%Client{} = client, item_id, opts \\ []) do
-    HTTP.get(client, "/investments", params: [item_id: item_id] ++ opts)
+    HTTP.get(client, "#{@prefix_url}", params: [item_id: item_id] ++ opts)
   end
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
@@ -22,7 +24,7 @@ defmodule Pluggy.Investments do
   """
   @spec get(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def get(%Client{} = client, id) do
-    HTTP.get(client, "/investments/#{id}")
+    HTTP.get(client, "#{@prefix_url}/#{id}")
   end
 
   @spec get!(Client.t(), String.t()) :: term()
@@ -34,7 +36,7 @@ defmodule Pluggy.Investments do
   @spec transactions(Client.t(), String.t(), keyword()) ::
           {:ok, term()} | {:error, Pluggy.Error.t()}
   def transactions(%Client{} = client, id, opts \\ []) do
-    HTTP.get(client, "/investments/#{id}/transactions", params: opts)
+    HTTP.get(client, "#{@prefix_url}/#{id}/transactions", params: opts)
   end
 
   @spec transactions!(Client.t(), String.t(), keyword()) :: term()
