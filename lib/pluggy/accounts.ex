@@ -5,6 +5,8 @@ defmodule Pluggy.Accounts do
 
   alias Pluggy.{Client, HTTP, Unwrap}
 
+  @prefix_url "/accounts"
+
   @doc """
   Lists accounts for a given item.
 
@@ -14,7 +16,7 @@ defmodule Pluggy.Accounts do
   """
   @spec list(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def list(%Client{} = client, item_id, opts \\ []) do
-    HTTP.get(client, "/accounts", params: [item_id: item_id] ++ opts)
+    HTTP.get(client, "#{@prefix_url}", params: [item_id: item_id] ++ opts)
   end
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
@@ -26,7 +28,7 @@ defmodule Pluggy.Accounts do
   """
   @spec get(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def get(%Client{} = client, id) do
-    HTTP.get(client, "/accounts/#{id}")
+    HTTP.get(client, "#{@prefix_url}/#{id}")
   end
 
   @spec get!(Client.t(), String.t()) :: term()
@@ -37,7 +39,7 @@ defmodule Pluggy.Accounts do
   """
   @spec statements(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def statements(%Client{} = client, id) do
-    HTTP.get(client, "/accounts/#{id}/statements")
+    HTTP.get(client, "#{@prefix_url}/#{id}/statements")
   end
 
   @spec statements!(Client.t(), String.t()) :: term()

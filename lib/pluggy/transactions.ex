@@ -5,6 +5,8 @@ defmodule Pluggy.Transactions do
 
   alias Pluggy.{Client, HTTP, Unwrap}
 
+  @prefix_url "/transactions"
+
   @doc """
   Lists transactions for a given account.
 
@@ -17,7 +19,7 @@ defmodule Pluggy.Transactions do
   """
   @spec list(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def list(%Client{} = client, account_id, opts \\ []) do
-    HTTP.get(client, "/transactions", params: [account_id: account_id] ++ opts)
+    HTTP.get(client, "#{@prefix_url}", params: [account_id: account_id] ++ opts)
   end
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
@@ -29,7 +31,7 @@ defmodule Pluggy.Transactions do
   """
   @spec get(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def get(%Client{} = client, id) do
-    HTTP.get(client, "/transactions/#{id}")
+    HTTP.get(client, "#{@prefix_url}/#{id}")
   end
 
   @spec get!(Client.t(), String.t()) :: term()
@@ -40,7 +42,7 @@ defmodule Pluggy.Transactions do
   """
   @spec update(Client.t(), String.t(), map()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
   def update(%Client{} = client, id, attrs) do
-    HTTP.patch(client, "/transactions/#{id}", json: attrs)
+    HTTP.patch(client, "#{@prefix_url}/#{id}", json: attrs)
   end
 
   @spec update!(Client.t(), String.t(), map()) :: term()
