@@ -139,8 +139,11 @@ defmodule Pluggy.HTTP do
 
   def has_next_page?(_), do: false
 
-  def unwrap_tuple!({:ok, body}), do: body
-  def unwrap_tuple!({:error, %Error{} = error}), do: raise(error)
+  def unwrap_tuple!(ok_tuple) when is_tuple(ok_tuple) and elem(ok_tuple, 0) == :ok,
+    do: Tuple.delete_at(ok_tuple, 0)
+
+  def unwrap_tuple!({:error, reason}), do: raise(reason)
+  def unwrap_tuple!(_unexpected_tuple), do: raise("Unexpected error")
 
   defp convert_params(opts) do
     case Keyword.pop(opts, :params) do
