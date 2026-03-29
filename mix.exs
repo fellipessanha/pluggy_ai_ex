@@ -11,7 +11,12 @@ defmodule PluggyAiEx.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      package: package()
+      package: package(),
+      source_url: "https://github.com/fellipessanha/pluggy_ai_ex",
+      docs: [
+        main: "readme",
+        extras: ["README.md", "demo/pluggy_demo.livemd"]
+      ]
     ]
   end
 
@@ -32,7 +37,7 @@ defmodule PluggyAiEx.MixProject do
       {:plug, "~> 1.16"},
       # dev/test
       {:bandit, "~> 1.0", only: :test},
-      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
