@@ -1,8 +1,8 @@
 defmodule Pluggy.TransactionsTest do
   use ExUnit.Case, async: true
 
-  alias Pluggy.Transactions
   alias Pluggy.HTTP
+  alias Pluggy.Transactions
 
   @mock_plug {Pluggy.Test.MockPlug, []}
 
