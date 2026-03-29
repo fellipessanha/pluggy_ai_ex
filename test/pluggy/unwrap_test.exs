@@ -26,12 +26,6 @@ defmodule Pluggy.UnwrapTest do
     end
   end
 
-  describe "all_pages/2" do
-  end
-
-  describe "with_cursor/2" do
-  end
-
   describe "attach/2 with :results" do
     @mock_plug {Pluggy.Test.MockPlug, []}
 

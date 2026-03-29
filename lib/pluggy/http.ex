@@ -3,6 +3,26 @@ defmodule Pluggy.HTTP do
 
   alias Pluggy.{Client, Error, KeyTransform}
 
+  defmodule Cursor do
+    @moduledoc """
+    An opaque cursor for paginated API responses.
+
+    Holds a fetcher function and the next page number. Pass to
+    `Pluggy.HTTP.next/1` to fetch the next page.
+    """
+
+    @type t :: %__MODULE__{
+            fetcher: Pluggy.HTTP.fetcher(),
+            page: pos_integer()
+          }
+
+    @enforce_keys [:fetcher, :page]
+    defstruct [:fetcher, :page]
+  end
+
+  @typedoc "A function that fetches a specific page number."
+  @type fetcher :: (pos_integer() -> {:ok, map()} | {:error, Error.t()})
+
   @doc false
   defguard is_paginated(body)
            when is_map_key(body, :results) and
@@ -48,6 +68,43 @@ defmodule Pluggy.HTTP do
   @spec delete(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Error.t()}
   def delete(%Client{} = client, path, opts \\ []) do
     request(client, :delete, path, opts)
+  end
+
+  # -- Cursor-based pagination --
+
+  @doc """
+  Fetches a page using the given fetcher and returns a cursor for the next page.
+
+  The `fetcher` is a function that accepts a page number and returns
+  `{:ok, paginated_response}` or `{:error, error}`.
+
+  Returns `{:ok, response, cursor}` where `cursor` is a `%Cursor{}` struct
+  when more pages are available, or `nil` when on the last page.
+
+  ## Examples
+
+      fetcher = fn page -> Pluggy.Connectors.list(client, page: page) end
+      {:ok, response, cursor} = Pluggy.HTTP.with_cursor(fetcher)
+      {:ok, next_response, nil} = Pluggy.HTTP.with_cursor(cursor)
+
+  """
+  @spec with_cursor(fetcher() | Cursor.t(), pos_integer()) ::
+          {:ok, map(), Cursor.t() | nil} | {:error, Error.t()}
+  def with_cursor(%Cursor{fetcher: fetcher, page: page}) do
+    with_cursor(fetcher, page)
+  end
+
+  def with_cursor(fetcher, page \\ 1) when is_function(fetcher, 1) and is_integer(page) do
+    case fetcher.(page) do
+      {:ok, %{page: p, total_pages: tp} = response} when p < tp ->
+        {:ok, response, %Cursor{fetcher: fetcher, page: p + 1}}
+
+      {:ok, %{} = response} ->
+        {:ok, response, nil}
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   # -- Private --
