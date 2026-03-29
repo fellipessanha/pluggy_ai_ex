@@ -139,6 +139,9 @@ defmodule Pluggy.HTTP do
 
   def has_next_page?(_), do: false
 
+  def unwrap_tuple!({:ok, body}), do: body
+  def unwrap_tuple!({:error, %Error{} = error}), do: raise(error)
+
   defp convert_params(opts) do
     case Keyword.pop(opts, :params) do
       {nil, opts} ->
