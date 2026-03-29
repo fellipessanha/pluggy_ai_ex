@@ -34,9 +34,10 @@ defmodule Pluggy.Connectors do
   @doc """
   Lists connectors with cursor-based pagination.
 
-  Returns a three-element success tuple `{:ok, response, next_page}` where
-  `response` is the full paginated response map and `next_page` is the next
-  page number to fetch, or `nil` when there are no more pages.
+  Returns `{:ok, response, cursor}` where `cursor` is a `%Pluggy.HTTP.Cursor{}`
+  when more pages are available, or `nil` when on the last page.
+
+  Pass the cursor to `Pluggy.HTTP.with_cursor/1` to fetch the next page.
 
   ## Options
 
@@ -46,23 +47,15 @@ defmodule Pluggy.Connectors do
 
   ## Examples
 
-      {:ok, response, nil} = Pluggy.Connectors.list_with_cursor(client)
-      {:ok, response, 2}  = Pluggy.Connectors.list_with_cursor(client, page: 1)
+      {:ok, response, cursor} = Pluggy.Connectors.list_with_cursor(client)
+      {:ok, next_response, nil} = Pluggy.HTTP.with_cursor(cursor)
 
   """
   @spec list_with_cursor(Client.t(), keyword()) ::
-          {:ok, map(), non_neg_integer() | nil} | {:error, Pluggy.Error.t()}
+          {:ok, map(), HTTP.Cursor.t() | nil} | {:error, Pluggy.Error.t()}
   def list_with_cursor(%Client{} = client, opts \\ []) do
-    case HTTP.get(client, @prefix_url, params: opts) do
-      {:ok, %{page: page, total_pages: total_pages} = response} when page < total_pages ->
-        {:ok, response, page + 1}
-
-      {:ok, %{} = response} ->
-        {:ok, response, nil}
-
-      {:error, _} = error ->
-        error
-    end
+    fetcher = fn page -> list(client, Keyword.put(opts, :page, page)) end
+    HTTP.with_cursor(fetcher)
   end
 
   @doc """

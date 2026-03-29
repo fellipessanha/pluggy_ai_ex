@@ -2,6 +2,7 @@ defmodule Pluggy.ConnectorsTest do
   use ExUnit.Case, async: true
 
   alias Pluggy.Connectors
+  alias Pluggy.HTTP
 
   @mock_plug {Pluggy.Test.MockPlug, []}
 
@@ -97,7 +98,7 @@ defmodule Pluggy.ConnectorsTest do
 
       {:ok, client} = Pluggy.Client.new("test_id", "test_secret", req_options: [plug: plug])
 
-      assert {:ok, %{results: [%{id: 201, name: "Test Bank"}]}, 2} =
+      assert {:ok, %{results: [%{id: 201, name: "Test Bank"}]}, %HTTP.Cursor{}} =
                Connectors.list_with_cursor(client)
     end
 
