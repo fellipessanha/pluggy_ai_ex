@@ -3,7 +3,7 @@ defmodule Pluggy.Loans do
   Functions for interacting with the Pluggy Loans API.
   """
 
-  alias Pluggy.{Client, HTTP, Unwrap}
+  alias Pluggy.{Client, HTTP}
 
   @prefix_url "/loans"
 
@@ -17,7 +17,7 @@ defmodule Pluggy.Loans do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, item_id, opts \\ []),
-    do: Unwrap.result!(list(client, item_id, opts))
+    do: HTTP.unwrap_tuple!(list(client, item_id, opts))
 
   @doc """
   Lists loans with cursor-based pagination.
@@ -43,5 +43,5 @@ defmodule Pluggy.Loans do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
+  def get!(%Client{} = client, id), do: HTTP.unwrap_tuple!(get(client, id))
 end

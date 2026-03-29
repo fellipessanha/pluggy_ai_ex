@@ -114,7 +114,7 @@ defmodule Pluggy.Client do
   """
   @spec connect_token!(t(), keyword()) :: String.t()
   def connect_token!(%__MODULE__{} = client, opts \\ []) do
-    Pluggy.Unwrap.result!(connect_token(client, opts))
+    Pluggy.HTTP.unwrap_tuple!(connect_token(client, opts))
   end
 
   # Response step: convert camelCase keys to snake_case atoms

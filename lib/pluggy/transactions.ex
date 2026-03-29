@@ -3,7 +3,7 @@ defmodule Pluggy.Transactions do
   Functions for interacting with the Pluggy Transactions API.
   """
 
-  alias Pluggy.{Client, HTTP, Unwrap}
+  alias Pluggy.{Client, HTTP}
 
   @prefix_url "/transactions"
 
@@ -24,7 +24,7 @@ defmodule Pluggy.Transactions do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, account_id, opts \\ []),
-    do: Unwrap.result!(list(client, account_id, opts))
+    do: HTTP.unwrap_tuple!(list(client, account_id, opts))
 
   @doc """
   Lists transactions with cursor-based pagination.
@@ -50,7 +50,7 @@ defmodule Pluggy.Transactions do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
+  def get!(%Client{} = client, id), do: HTTP.unwrap_tuple!(get(client, id))
 
   @doc """
   Updates a transaction (e.g. to change its category).
@@ -61,5 +61,5 @@ defmodule Pluggy.Transactions do
   end
 
   @spec update!(Client.t(), String.t(), map()) :: term()
-  def update!(%Client{} = client, id, attrs), do: Unwrap.result!(update(client, id, attrs))
+  def update!(%Client{} = client, id, attrs), do: HTTP.unwrap_tuple!(update(client, id, attrs))
 end

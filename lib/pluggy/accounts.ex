@@ -3,7 +3,7 @@ defmodule Pluggy.Accounts do
   Functions for interacting with the Pluggy Accounts API.
   """
 
-  alias Pluggy.{Client, HTTP, Unwrap}
+  alias Pluggy.{Client, HTTP}
 
   @prefix_url "/accounts"
 
@@ -21,7 +21,7 @@ defmodule Pluggy.Accounts do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, item_id, opts \\ []),
-    do: Unwrap.result!(list(client, item_id, opts))
+    do: HTTP.unwrap_tuple!(list(client, item_id, opts))
 
   @doc """
   Lists accounts with cursor-based pagination.
@@ -47,7 +47,7 @@ defmodule Pluggy.Accounts do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
+  def get!(%Client{} = client, id), do: HTTP.unwrap_tuple!(get(client, id))
 
   @doc """
   Fetches statements for an account.
@@ -58,5 +58,5 @@ defmodule Pluggy.Accounts do
   end
 
   @spec statements!(Client.t(), String.t()) :: term()
-  def statements!(%Client{} = client, id), do: Unwrap.result!(statements(client, id))
+  def statements!(%Client{} = client, id), do: HTTP.unwrap_tuple!(statements(client, id))
 end

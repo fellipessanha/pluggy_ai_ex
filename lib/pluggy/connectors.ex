@@ -5,7 +5,7 @@ defmodule Pluggy.Connectors do
   Connectors represent financial institutions available for connection.
   """
 
-  alias Pluggy.{Client, HTTP, Unwrap}
+  alias Pluggy.{Client, HTTP}
   @prefix_url "/connectors"
 
   @doc """
@@ -29,7 +29,7 @@ defmodule Pluggy.Connectors do
   end
 
   @spec list!(Client.t(), keyword()) :: map()
-  def list!(%Client{} = client, opts \\ []), do: Unwrap.result!(list(client, opts))
+  def list!(%Client{} = client, opts \\ []), do: HTTP.unwrap_tuple!(list(client, opts))
 
   @doc """
   Lists connectors with cursor-based pagination.
@@ -73,7 +73,7 @@ defmodule Pluggy.Connectors do
   end
 
   @spec get!(Client.t(), integer(), keyword()) :: map()
-  def get!(%Client{} = client, id, opts \\ []), do: Unwrap.result!(get(client, id, opts))
+  def get!(%Client{} = client, id, opts \\ []), do: HTTP.unwrap_tuple!(get(client, id, opts))
 
   @doc """
   Validates credentials for a connector.
@@ -86,5 +86,6 @@ defmodule Pluggy.Connectors do
   end
 
   @spec validate!(Client.t(), integer(), map()) :: map()
-  def validate!(%Client{} = client, id, params), do: Unwrap.result!(validate(client, id, params))
+  def validate!(%Client{} = client, id, params),
+    do: HTTP.unwrap_tuple!(validate(client, id, params))
 end

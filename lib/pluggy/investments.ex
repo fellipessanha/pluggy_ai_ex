@@ -3,7 +3,7 @@ defmodule Pluggy.Investments do
   Functions for interacting with the Pluggy Investments API.
   """
 
-  alias Pluggy.{Client, HTTP, Unwrap}
+  alias Pluggy.{Client, HTTP}
 
   @prefix_url "/investments"
 
@@ -17,7 +17,7 @@ defmodule Pluggy.Investments do
 
   @spec list!(Client.t(), String.t(), keyword()) :: term()
   def list!(%Client{} = client, item_id, opts \\ []),
-    do: Unwrap.result!(list(client, item_id, opts))
+    do: HTTP.unwrap_tuple!(list(client, item_id, opts))
 
   @doc """
   Lists investments with cursor-based pagination.
@@ -43,7 +43,7 @@ defmodule Pluggy.Investments do
   end
 
   @spec get!(Client.t(), String.t()) :: term()
-  def get!(%Client{} = client, id), do: Unwrap.result!(get(client, id))
+  def get!(%Client{} = client, id), do: HTTP.unwrap_tuple!(get(client, id))
 
   @doc """
   Fetches transactions for an investment.
@@ -56,5 +56,5 @@ defmodule Pluggy.Investments do
 
   @spec transactions!(Client.t(), String.t(), keyword()) :: term()
   def transactions!(%Client{} = client, id, opts \\ []),
-    do: Unwrap.result!(transactions(client, id, opts))
+    do: HTTP.unwrap_tuple!(transactions(client, id, opts))
 end
