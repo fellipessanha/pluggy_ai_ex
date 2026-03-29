@@ -6,11 +6,9 @@ defmodule Pluggy.Unwrap do
 
       %{results: [items...], page: 1, total_pages: 3, total: 150}
 
-  This module provides three consumption patterns:
+  This module provides helpers for working with these responses:
 
     * `results/1` — extract the `:results` list from a single page
-    * `all_pages/2` — lazy `Stream` of all items across every page
-    * `with_cursor/2` — current page results + a cursor to the next page
 
   All functions accept `{:ok, body}` or `{:error, reason}` tuples and
   propagate errors unchanged. `results/1` also accepts a bare
@@ -19,7 +17,7 @@ defmodule Pluggy.Unwrap do
   ## Req plugin
 
   `attach/2` adds a response step to a `Req.Request` that automatically
-  unwraps paginated responses in one of the three modes above.
+  unwraps paginated responses.
   """
 
   alias Pluggy.Error
@@ -32,9 +30,6 @@ defmodule Pluggy.Unwrap do
           total_pages: non_neg_integer(),
           total: non_neg_integer()
         }
-
-  @typedoc "A function that fetches a specific page number."
-  @type fetcher :: (pos_integer() -> {:ok, paginated()} | {:error, Error.t()})
 
   @doc false
   defguard is_paginated(body)
@@ -86,7 +81,7 @@ defmodule Pluggy.Unwrap do
     if body.total_pages > body.page do
       Logger.warning(
         "Pluggy response has more pages (page #{body.page} of #{body.total_pages}). " <>
-          "Use Unwrap.all_pages/2 to fetch all pages."
+          "Use HTTP.with_cursor/2 for cursor-based pagination."
       )
     end
 

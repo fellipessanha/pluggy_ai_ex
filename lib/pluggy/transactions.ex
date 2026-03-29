@@ -27,6 +27,21 @@ defmodule Pluggy.Transactions do
     do: Unwrap.result!(list(client, account_id, opts))
 
   @doc """
+  Lists transactions with cursor-based pagination.
+
+  Returns `{:ok, response, cursor}` where `cursor` is a `%Pluggy.HTTP.Cursor{}`
+  when more pages are available, or `nil` when on the last page.
+
+  Pass the cursor to `Pluggy.HTTP.with_cursor/1` to fetch the next page.
+  """
+  @spec list_with_cursor(Client.t(), String.t(), keyword()) ::
+          {:ok, map(), HTTP.Cursor.t() | nil} | {:error, Pluggy.Error.t()}
+  def list_with_cursor(%Client{} = client, account_id, opts \\ []) do
+    fetcher = fn page -> list(client, account_id, Keyword.put(opts, :page, page)) end
+    HTTP.with_cursor(fetcher)
+  end
+
+  @doc """
   Gets a transaction by ID.
   """
   @spec get(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}

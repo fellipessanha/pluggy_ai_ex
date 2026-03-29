@@ -154,4 +154,63 @@ defmodule Pluggy.HTTPTest do
       assert {:ok, _} = HTTP.delete(client, "/items/some-id")
     end
   end
+
+  describe "with_cursor/2" do
+    test "returns nil cursor when response is a single page" do
+      fetcher = fn 1 ->
+        {:ok, %{results: [%{id: "a"}], page: 1, total_pages: 1, total: 1}}
+      end
+
+      assert {:ok, %{results: [%{id: "a"}]}, nil} = HTTP.with_cursor(fetcher)
+    end
+
+    test "returns cursor with next page when more pages exist" do
+      fetcher = fn 1 ->
+        {:ok, %{results: [%{id: "a"}], page: 1, total_pages: 3, total: 3}}
+      end
+
+      assert {:ok, %{results: [%{id: "a"}]}, %HTTP.Cursor{page: 2}} =
+               HTTP.with_cursor(fetcher)
+    end
+
+    test "advances through pages with with_cursor/1" do
+      fetcher = fn
+        1 -> {:ok, %{results: [%{id: "a"}], page: 1, total_pages: 3, total: 3}}
+        2 -> {:ok, %{results: [%{id: "b"}], page: 2, total_pages: 3, total: 3}}
+        3 -> {:ok, %{results: [%{id: "c"}], page: 3, total_pages: 3, total: 3}}
+      end
+
+      assert {:ok, %{results: [%{id: "a"}]}, cursor} = HTTP.with_cursor(fetcher)
+      assert %HTTP.Cursor{page: 2} = cursor
+
+      assert {:ok, %{results: [%{id: "b"}]}, cursor} = HTTP.with_cursor(cursor)
+      assert %HTTP.Cursor{page: 3} = cursor
+
+      assert {:ok, %{results: [%{id: "c"}]}, nil} = HTTP.with_cursor(cursor)
+    end
+
+    test "starts from a custom page number" do
+      fetcher = fn
+        2 -> {:ok, %{results: [%{id: "b"}], page: 2, total_pages: 3, total: 3}}
+        3 -> {:ok, %{results: [%{id: "c"}], page: 3, total_pages: 3, total: 3}}
+      end
+
+      assert {:ok, %{results: [%{id: "b"}]}, %HTTP.Cursor{page: 3}} =
+               HTTP.with_cursor(fetcher, 2)
+    end
+
+    test "propagates errors from the fetcher" do
+      error = %Error{code: 500, message: "Internal Server Error"}
+
+      fetcher = fn 1 -> {:error, error} end
+
+      assert {:error, ^error} = HTTP.with_cursor(fetcher)
+    end
+
+    test "returns nil cursor for non-paginated response" do
+      fetcher = fn 1 -> {:ok, %{id: "single-item"}} end
+
+      assert {:ok, %{id: "single-item"}, nil} = HTTP.with_cursor(fetcher)
+    end
+  end
 end
