@@ -139,6 +139,40 @@ defmodule Pluggy.HTTP do
 
   def has_next_page?(_), do: false
 
+  @doc """
+  Extracts the success value from a result tuple, raising on errors.
+
+  - `{:ok, value}` — returns `value`.
+  - `{:ok, a, b, ...}` — returns the tuple with `:ok` removed (e.g. `{a, b}`).
+  - `{:error, reason}` — raises `reason`.
+  - Anything else — raises `"Unexpected error"`.
+
+  ## Examples
+
+      iex> Pluggy.HTTP.unwrap_tuple!({:ok, 42})
+      42
+
+      iex> Pluggy.HTTP.unwrap_tuple!({:ok, :a, :b})
+      {:a, :b}
+
+      iex> Pluggy.HTTP.unwrap_tuple!({:ok, 1, 2, 3})
+      {1, 2, 3}
+
+      iex> Pluggy.HTTP.unwrap_tuple!({:error, %RuntimeError{message: "boom"}})
+      ** (RuntimeError) boom
+
+      iex> Pluggy.HTTP.unwrap_tuple!(:not_a_tuple)
+      ** (RuntimeError) Unexpected error
+
+  """
+  def unwrap_tuple!({:ok, value}), do: value
+
+  def unwrap_tuple!(ok_tuple) when is_tuple(ok_tuple) and elem(ok_tuple, 0) == :ok,
+    do: Tuple.delete_at(ok_tuple, 0)
+
+  def unwrap_tuple!({:error, reason}), do: raise(reason)
+  def unwrap_tuple!(_unexpected_tuple), do: raise("Unexpected error")
+
   defp convert_params(opts) do
     case Keyword.pop(opts, :params) do
       {nil, opts} ->

@@ -1,6 +1,8 @@
 defmodule Pluggy.HTTPTest do
   use ExUnit.Case, async: true
 
+  doctest Pluggy.HTTP
+
   alias Pluggy.{Client, Error, HTTP}
 
   @mock_plug {Pluggy.Test.MockPlug, []}
