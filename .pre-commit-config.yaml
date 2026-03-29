@@ -8,14 +8,14 @@ repos:
         entry: mix format
         files: \.exs?$
       - id: mix-test
-        name: Run mix test
+        name: Run tests
         description: Runs Elixir tests with mix test.
         language: system
         entry: mix test
         files: \.ex$
       - id: mix-credo
-        name: Run mix credo
+        name: Run strict credo
         description: Runs Elixir code analysis with mix credo.
         language: system
-        entry: mix credo
+        entry: mix credo --strict
         files: \.ex$
