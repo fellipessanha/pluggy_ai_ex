@@ -1,5 +1,25 @@
 defmodule Pluggy.HTTP do
-  @moduledoc false
+  @moduledoc """
+  Low-level HTTP interface and cursor-based pagination for the Pluggy API.
+
+  Most users should call the resource modules (`Pluggy.Accounts`,
+  `Pluggy.Transactions`, etc.) rather than using this module directly.
+  This module is primarily useful for its pagination helpers:
+
+    * `with_cursor/1` — advance a `Pluggy.HTTP.Cursor` to fetch the next page
+    * `with_cursor/2` — start cursor-based iteration from a fetcher function
+    * `unwrap_tuple!/1` — extract the success value from a result tuple, raising on errors
+
+  ## Cursor-based pagination
+
+  Resource modules that support pagination return
+  `{:ok, response, cursor}` tuples. The `cursor` is a `Pluggy.HTTP.Cursor`
+  struct that you can pass back to `with_cursor/1` to fetch successive pages.
+
+      fetcher = fn page -> Pluggy.Connectors.list(client, page: page) end
+      {:ok, first_page, cursor} = Pluggy.HTTP.with_cursor(fetcher)
+      {:ok, second_page, nil}   = Pluggy.HTTP.with_cursor(cursor)
+  """
 
   alias Pluggy.{Client, Error, KeyTransform}
 
@@ -29,42 +49,28 @@ defmodule Pluggy.HTTP do
                   is_map_key(body, :page) and
                   is_map_key(body, :total_pages)
 
-  @doc """
-  Performs a GET request.
-
-  Query params in `opts[:params]` are converted from snake_case to camelCase.
-  """
+  @doc false
   @spec get(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Error.t()}
   def get(%Client{} = client, path, opts \\ []) do
     opts = convert_params(opts)
     request(client, :get, path, opts)
   end
 
-  @doc """
-  Performs a POST request.
-
-  The `:json` body is converted from snake_case atom keys to camelCase string keys.
-  """
+  @doc false
   @spec post(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Error.t()}
   def post(%Client{} = client, path, opts \\ []) do
     opts = convert_body(opts)
     request(client, :post, path, opts)
   end
 
-  @doc """
-  Performs a PATCH request.
-
-  The `:json` body is converted from snake_case atom keys to camelCase string keys.
-  """
+  @doc false
   @spec patch(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Error.t()}
   def patch(%Client{} = client, path, opts \\ []) do
     opts = convert_body(opts)
     request(client, :patch, path, opts)
   end
 
-  @doc """
-  Performs a DELETE request.
-  """
+  @doc false
   @spec delete(Client.t(), String.t(), keyword()) :: {:ok, term()} | {:error, Error.t()}
   def delete(%Client{} = client, path, opts \\ []) do
     request(client, :delete, path, opts)
@@ -133,6 +139,7 @@ defmodule Pluggy.HTTP do
     end
   end
 
+  @doc false
   def has_next_page?(%Req.Response{body: %{page: page, total_pages: total_pages}} = response)
       when is_paginated(response.body),
       do: page < total_pages

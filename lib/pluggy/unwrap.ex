@@ -24,6 +24,7 @@ defmodule Pluggy.Unwrap do
   """
 
   alias Pluggy.{Error, HTTP}
+  require Logger
 
   @typedoc "A paginated API response body."
   @type paginated :: %{
@@ -88,7 +89,30 @@ defmodule Pluggy.Unwrap do
       iex> Pluggy.Unwrap.results!({:ok, %{results: [1, 2], page: 1, total_pages: 1, total: 2}})
       [1, 2]
 
-      iex> Pluggy.Unwrap.results!({:ok, %{id: "single"}})
+      iex> Pluggy.Unwrap.result({:error, %Pluggy.Error{code: 500, message: "boom"}})
+      {:error, %Pluggy.Error{code: 500, message: "boom"}}
+  """
+  @spec result({:ok, term()} | {:error, term()}) :: {:ok, term()} | {:error, term()}
+  def result({:ok, body}) when is_paginated(body) do
+    if body.total_pages > body.page do
+      Logger.warning(
+        "Pluggy response has more pages (page #{body.page} of #{body.total_pages}). " <>
+          "Use Unwrap.all_pages/2 to fetch all pages."
+      )
+    end
+
+    body
+  end
+
+  def result({:ok, body} = _ok), do: body
+  def result({:error, _} = error), do: error
+
+  @doc """
+  Unwraps a response tuple, returning the value on success or raising on error.
+
+  ## Examples
+
+      iex> Pluggy.Unwrap.result!({:ok, %{id: "single"}})
       %{id: "single"}
   """
   @spec results!(
