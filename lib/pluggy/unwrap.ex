@@ -74,11 +74,7 @@ defmodule Pluggy.Unwrap do
           {:ok, list() | term()} | {:error, term()}
   def results(%Req.Response{} = response), do: results({:ok, response.body})
   def results({:ok, body, _cursor}), do: results({:ok, body})
-
-  def results({:ok, body}) when is_paginated(body) do
-    body.results
-  end
-
+  def results({:ok, body}) when is_paginated(body), do: body.results
   def results(body) when is_paginated(body), do: body.results
   def results({:ok, body}), do: body
   def results({:error, _} = error), do: error
@@ -242,5 +238,5 @@ defmodule Pluggy.Unwrap do
 
   defp unwrap_step({req, response}), do: {req, response}
 
-  defp apply_mode(:results, %Req.Response{} = response), do: results(response)
+  defp apply_mode(:results, %Req.Response{} = response), do: {:ok, results(response)}
 end

@@ -57,7 +57,7 @@ defmodule Pluggy.UnwrapTest do
       client = build_client()
       client = %{client | req: Unwrap.attach(client.req, :results)}
 
-      assert %{results: [%{id: "stmt-uuid-001"}]} =
+      assert {:ok, %{results: [%{id: "stmt-uuid-001"}]}} =
                Pluggy.Accounts.statements(client, "account-uuid-001")
     end
   end
