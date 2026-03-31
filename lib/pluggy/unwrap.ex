@@ -74,8 +74,13 @@ defmodule Pluggy.Unwrap do
           {:ok, list() | term()} | {:error, term()}
   def results(%Req.Response{} = response), do: results({:ok, response.body})
   def results({:ok, body, _cursor}), do: results({:ok, body})
-  def results({:ok, body}) when is_paginated(body), do: {:ok, body.results}
-  def results({:ok, _body} = ok), do: ok
+
+  def results({:ok, body}) when is_paginated(body) do
+    body.results
+  end
+
+  def results(body) when is_paginated(body), do: body.results
+  def results({:ok, body}), do: body
   def results({:error, _} = error), do: error
 
   @doc """
@@ -125,11 +130,11 @@ defmodule Pluggy.Unwrap do
           term()
   def results!(response) do
     case results(response) do
-      {:ok, value} ->
-        value
-
       {:error, %Error{} = error} ->
         raise RuntimeError, "Pluggy API error: #{error.message} (code: #{error.code})"
+
+      result ->
+        result
     end
   end
 
@@ -152,14 +157,14 @@ defmodule Pluggy.Unwrap do
       #=> [[%{id: 201, ...}, ...], [%{id: 301, ...}, ...]]
   """
   @spec stream_results(cursor_result()) :: Enumerable.t()
-  def stream_results({:ok, %{results: results}, cursor}) when is_list(results) do
-    Stream.unfold({:emit, results, cursor}, fn
-      {:emit, results, cursor} ->
-        {results, {:fetch, cursor}}
+  def stream_results({:ok, %{} = response, cursor}) when is_paginated(response) do
+    Stream.unfold({:emit, response, cursor}, fn
+      {:emit, response, cursor} ->
+        {response, {:fetch, cursor}}
 
       {:fetch, %HTTP.Cursor{} = cursor} ->
         case HTTP.with_cursor(cursor) do
-          {:ok, %{results: next_results}, next_cursor} ->
+          {:ok, %{} = next_results, next_cursor} ->
             {next_results, {:fetch, next_cursor}}
 
           {:error, error} ->
@@ -186,18 +191,16 @@ defmodule Pluggy.Unwrap do
 
       Pluggy.Connectors.list_with_cursor(client)
       |> Pluggy.Unwrap.all_results()
-      #=> {:ok, [%{id: 201, ...}, %{id: 202, ...}, ...]}
+      #=> [%{id: 201, ...}, %{id: 202, ...}, ...]
   """
   @spec all_results(cursor_result()) :: {:ok, list()} | {:error, Error.t()}
   def all_results({:error, _} = error), do: error
 
   def all_results({:ok, _, _} = cursor_result) do
-    items =
-      cursor_result
-      |> stream_results()
-      |> Enum.flat_map(fn page -> page end)
-
-    {:ok, items}
+    cursor_result
+    |> stream_results()
+    |> Enum.to_list()
+    |> Enum.flat_map(fn response -> results!(response) end)
   rescue
     e in RuntimeError -> {:error, e}
   end

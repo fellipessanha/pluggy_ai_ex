@@ -8,17 +8,17 @@ defmodule Pluggy.UnwrapTest do
   describe "results/1" do
     test "extracts items from a paginated response" do
       response = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}}
-      assert {:ok, [%{id: "a"}, %{id: "b"}]} = Unwrap.results(response)
+      assert [%{id: "a"}, %{id: "b"}] = Unwrap.results(response)
     end
 
     test "handles empty results" do
       response = {:ok, %{results: [], page: 1, total_pages: 0, total: 0}}
-      assert {:ok, []} = Unwrap.results(response)
+      assert [] = Unwrap.results(response)
     end
 
     test "passes through non-paginated response unchanged" do
       response = {:ok, %{id: "single-item", name: "test"}}
-      assert {:ok, %{id: "single-item", name: "test"}} = Unwrap.results(response)
+      assert %{id: "single-item", name: "test"} = Unwrap.results(response)
     end
 
     test "passes through error tuples" do
@@ -57,7 +57,7 @@ defmodule Pluggy.UnwrapTest do
       client = build_client()
       client = %{client | req: Unwrap.attach(client.req, :results)}
 
-      assert {:ok, %{results: [%{id: "stmt-uuid-001"}]}} =
+      assert %{results: [%{id: "stmt-uuid-001"}]} =
                Pluggy.Accounts.statements(client, "account-uuid-001")
     end
   end
@@ -67,19 +67,19 @@ defmodule Pluggy.UnwrapTest do
       cursor = %Cursor{fetcher: fn _ -> :ok end, page: 2}
       data = %{results: [%{id: "a"}], page: 1, total_pages: 3, total: 3}
 
-      assert {:ok, [%{id: "a"}]} = Unwrap.results({:ok, data, cursor})
+      assert [%{id: "a"}] = Unwrap.results({:ok, data, cursor})
     end
 
     test "extracts results with nil cursor" do
       data = %{results: [%{id: "a"}], page: 1, total_pages: 1, total: 1}
 
-      assert {:ok, [%{id: "a"}]} = Unwrap.results({:ok, data, nil})
+      assert [%{id: "a"}] = Unwrap.results({:ok, data, nil})
     end
 
     test "passes through non-paginated body from cursor tuple" do
       data = %{id: "single"}
 
-      assert {:ok, %{id: "single"}} = Unwrap.results({:ok, data, nil})
+      assert %{id: "single"} = Unwrap.results({:ok, data, nil})
     end
   end
 
@@ -87,7 +87,7 @@ defmodule Pluggy.UnwrapTest do
     test "emits a single page when cursor is nil" do
       result = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}, nil}
 
-      assert Enum.to_list(Unwrap.stream_results(result)) == [[%{id: "a"}, %{id: "b"}]]
+      assert [%{results: [%{id: "a"}, %{id: "b"}]}] = Enum.to_list(Unwrap.stream_results(result))
     end
 
     test "emits one list per page across multiple pages" do
@@ -101,11 +101,11 @@ defmodule Pluggy.UnwrapTest do
       result =
         {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 3, total: 3}, cursor}
 
-      assert Enum.to_list(Unwrap.stream_results(result)) == [
-               [%{id: "a"}, %{id: "b"}],
-               [%{id: "c"}],
-               [%{id: "d"}]
-             ]
+      assert [
+               %{results: [%{id: "a"}, %{id: "b"}]},
+               %{results: [%{id: "c"}]},
+               %{results: [%{id: "d"}]}
+             ] = Enum.to_list(Unwrap.stream_results(result))
     end
 
     test "is lazy — does not fetch pages beyond what is consumed" do
@@ -146,7 +146,7 @@ defmodule Pluggy.UnwrapTest do
     test "emits empty list for empty first page" do
       result = {:ok, %{results: [], page: 1, total_pages: 1, total: 0}, nil}
 
-      assert Enum.to_list(Unwrap.stream_results(result)) == [[]]
+      assert [%{results: [], page: 1}] = Enum.to_list(Unwrap.stream_results(result))
     end
 
     test "raises on error tuple input" do
@@ -162,7 +162,7 @@ defmodule Pluggy.UnwrapTest do
     test "returns items from a single page" do
       result = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}, nil}
 
-      assert {:ok, [%{id: "a"}, %{id: "b"}]} = Unwrap.all_results(result)
+      assert [%{id: "a"}, %{id: "b"}] = Unwrap.all_results(result)
     end
 
     test "collects and flattens items across multiple pages" do
@@ -176,7 +176,7 @@ defmodule Pluggy.UnwrapTest do
       result =
         {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 3, total: 3}, cursor}
 
-      assert {:ok, [%{id: "a"}, %{id: "b"}, %{id: "c"}, %{id: "d"}]} =
+      assert [%{id: "a"}, %{id: "b"}, %{id: "c"}, %{id: "d"}] =
                Unwrap.all_results(result)
     end
 
@@ -199,7 +199,7 @@ defmodule Pluggy.UnwrapTest do
     test "returns empty list for empty results" do
       result = {:ok, %{results: [], page: 1, total_pages: 1, total: 0}, nil}
 
-      assert {:ok, []} = Unwrap.all_results(result)
+      assert [] = Unwrap.all_results(result)
     end
   end
 
