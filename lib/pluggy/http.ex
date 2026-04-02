@@ -8,6 +8,7 @@ defmodule Pluggy.HTTP do
 
     * `with_cursor/1` — advance a `Pluggy.HTTP.Cursor` to fetch the next page
     * `with_cursor/2` — start cursor-based iteration from a fetcher function
+    * `stream_results/1` — lazily stream pages from a cursor result
     * `unwrap_tuple!/1` — extract the success value from a result tuple, raising on errors
 
   ## Cursor-based pagination
@@ -22,6 +23,14 @@ defmodule Pluggy.HTTP do
   """
 
   alias Pluggy.{Client, Error, KeyTransform}
+
+  @typedoc "A paginated API response body."
+  @type paginated :: %{
+          results: list(),
+          page: pos_integer(),
+          total_pages: non_neg_integer(),
+          total: non_neg_integer()
+        }
 
   defmodule Cursor do
     @moduledoc """
@@ -39,6 +48,9 @@ defmodule Pluggy.HTTP do
     @enforce_keys [:fetcher, :page]
     defstruct [:fetcher, :page]
   end
+
+  @typedoc "A cursor-paginated result from `list_with_cursor`."
+  @type cursor_result :: {:ok, paginated(), Cursor.t() | nil} | {:error, Error.t()}
 
   @typedoc "A function that fetches a specific page number."
   @type fetcher :: (pos_integer() -> {:ok, map()} | {:error, Error.t()})
@@ -111,6 +123,48 @@ defmodule Pluggy.HTTP do
       {:error, _} = error ->
         error
     end
+  end
+
+  @doc """
+  Returns a lazy stream of pages from a cursor-paginated result.
+
+  Each stream element is one page's `:results` list. Accepts the return
+  value of a `list_with_cursor` call.
+
+  Raises on errors encountered during pagination. Use `all_results/1`
+  if you prefer error tuples.
+
+  ## Examples
+
+      {:ok, data, cursor} = Pluggy.Connectors.list_with_cursor(client)
+
+      {:ok, data, cursor}
+      |> Pluggy.HTTP.stream_results()
+      |> Enum.take(2)
+      #=> [[%{id: 201, ...}, ...], [%{id: 301, ...}, ...]]
+  """
+  @spec stream_results(cursor_result()) :: Enumerable.t()
+  def stream_results({:ok, %{} = response, cursor}) when is_paginated(response) do
+    Stream.unfold({:emit, response, cursor}, fn
+      {:emit, response, cursor} ->
+        {response, {:fetch, cursor}}
+
+      {:fetch, %Cursor{} = cursor} ->
+        case with_cursor(cursor) do
+          {:ok, %{} = next_results, next_cursor} ->
+            {next_results, {:fetch, next_cursor}}
+
+          {:error, error} ->
+            raise "Pluggy pagination error: #{inspect(error)}"
+        end
+
+      {:fetch, nil} ->
+        nil
+    end)
+  end
+
+  def stream_results({:error, _} = error) do
+    raise "Cannot stream results from error: #{inspect(error)}"
   end
 
   # -- Private --
