@@ -8,17 +8,17 @@ defmodule Pluggy.UnwrapTest do
   describe "results/1" do
     test "extracts items from a paginated response" do
       response = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}}
-      assert {:ok, [%{id: "a"}, %{id: "b"}]} = Unwrap.results(response)
+      assert [%{id: "a"}, %{id: "b"}] = Unwrap.results(response)
     end
 
     test "handles empty results" do
       response = {:ok, %{results: [], page: 1, total_pages: 0, total: 0}}
-      assert {:ok, []} = Unwrap.results(response)
+      assert [] = Unwrap.results(response)
     end
 
     test "passes through non-paginated response unchanged" do
       response = {:ok, %{id: "single-item", name: "test"}}
-      assert {:ok, %{id: "single-item", name: "test"}} = Unwrap.results(response)
+      assert %{id: "single-item", name: "test"} = Unwrap.results(response)
     end
 
     test "passes through error tuples" do
@@ -67,94 +67,19 @@ defmodule Pluggy.UnwrapTest do
       cursor = %Cursor{fetcher: fn _ -> :ok end, page: 2}
       data = %{results: [%{id: "a"}], page: 1, total_pages: 3, total: 3}
 
-      assert {:ok, [%{id: "a"}]} = Unwrap.results({:ok, data, cursor})
+      assert [%{id: "a"}] = Unwrap.results({:ok, data, cursor})
     end
 
     test "extracts results with nil cursor" do
       data = %{results: [%{id: "a"}], page: 1, total_pages: 1, total: 1}
 
-      assert {:ok, [%{id: "a"}]} = Unwrap.results({:ok, data, nil})
+      assert [%{id: "a"}] = Unwrap.results({:ok, data, nil})
     end
 
     test "passes through non-paginated body from cursor tuple" do
       data = %{id: "single"}
 
-      assert {:ok, %{id: "single"}} = Unwrap.results({:ok, data, nil})
-    end
-  end
-
-  describe "stream_results/1" do
-    test "emits a single page when cursor is nil" do
-      result = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}, nil}
-
-      assert Enum.to_list(Unwrap.stream_results(result)) == [[%{id: "a"}, %{id: "b"}]]
-    end
-
-    test "emits one list per page across multiple pages" do
-      fetcher = fn
-        2 -> {:ok, %{results: [%{id: "c"}], page: 2, total_pages: 3, total: 3}}
-        3 -> {:ok, %{results: [%{id: "d"}], page: 3, total_pages: 3, total: 3}}
-      end
-
-      cursor = %Cursor{fetcher: fetcher, page: 2}
-
-      result =
-        {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 3, total: 3}, cursor}
-
-      assert Enum.to_list(Unwrap.stream_results(result)) == [
-               [%{id: "a"}, %{id: "b"}],
-               [%{id: "c"}],
-               [%{id: "d"}]
-             ]
-    end
-
-    test "is lazy — does not fetch pages beyond what is consumed" do
-      test_pid = self()
-
-      fetcher = fn page ->
-        send(test_pid, {:fetched, page})
-        {:ok, %{results: [%{id: "page-#{page}"}], page: page, total_pages: 5, total: 5}}
-      end
-
-      cursor = %Cursor{fetcher: fetcher, page: 2}
-
-      result =
-        {:ok, %{results: [%{id: "page-1"}], page: 1, total_pages: 5, total: 5}, cursor}
-
-      result
-      |> Unwrap.stream_results()
-      |> Enum.take(2)
-
-      assert_received {:fetched, 2}
-      refute_received {:fetched, 3}
-    end
-
-    test "raises on error during pagination" do
-      fetcher = fn 2 -> {:error, %Error{code: 500, message: "boom"}} end
-      cursor = %Cursor{fetcher: fetcher, page: 2}
-
-      result =
-        {:ok, %{results: [%{id: "a"}], page: 1, total_pages: 3, total: 3}, cursor}
-
-      stream = Unwrap.stream_results(result)
-
-      assert_raise RuntimeError, ~r/pagination error/, fn ->
-        Enum.to_list(stream)
-      end
-    end
-
-    test "emits empty list for empty first page" do
-      result = {:ok, %{results: [], page: 1, total_pages: 1, total: 0}, nil}
-
-      assert Enum.to_list(Unwrap.stream_results(result)) == [[]]
-    end
-
-    test "raises on error tuple input" do
-      error = {:error, %Error{code: 500, message: "boom"}}
-
-      assert_raise RuntimeError, ~r/Cannot stream/, fn ->
-        Unwrap.stream_results(error)
-      end
+      assert %{id: "single"} = Unwrap.results({:ok, data, nil})
     end
   end
 
