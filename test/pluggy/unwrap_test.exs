@@ -87,7 +87,7 @@ defmodule Pluggy.UnwrapTest do
     test "returns items from a single page" do
       result = {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 1, total: 2}, nil}
 
-      assert [%{id: "a"}, %{id: "b"}] = Unwrap.all_results(result)
+      assert {:ok, [%{id: "a"}, %{id: "b"}]} = Unwrap.all_results(result)
     end
 
     test "collects and flattens items across multiple pages" do
@@ -101,7 +101,7 @@ defmodule Pluggy.UnwrapTest do
       result =
         {:ok, %{results: [%{id: "a"}, %{id: "b"}], page: 1, total_pages: 3, total: 3}, cursor}
 
-      assert [%{id: "a"}, %{id: "b"}, %{id: "c"}, %{id: "d"}] =
+      assert {:ok, [%{id: "a"}, %{id: "b"}, %{id: "c"}, %{id: "d"}]} =
                Unwrap.all_results(result)
     end
 
@@ -124,7 +124,7 @@ defmodule Pluggy.UnwrapTest do
     test "returns empty list for empty results" do
       result = {:ok, %{results: [], page: 1, total_pages: 1, total: 0}, nil}
 
-      assert [] = Unwrap.all_results(result)
+      assert {:ok, []} = Unwrap.all_results(result)
     end
   end
 
