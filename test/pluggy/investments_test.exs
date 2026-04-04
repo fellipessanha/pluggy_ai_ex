@@ -20,6 +20,14 @@ defmodule Pluggy.InvestmentsTest do
       assert {:ok, %{results: [%{id: "inv-uuid-001"}]}} =
                Investments.list(client, "item-uuid-001")
     end
+
+    test "accepts an item map instead of a string id" do
+      client = build_client()
+      item = %{id: "item-uuid-001", name: "My Bank"}
+
+      assert {:ok, %{results: [%{id: "inv-uuid-001"}]}} =
+               Investments.list(client, item)
+    end
   end
 
   describe "list!/2" do
@@ -52,6 +60,14 @@ defmodule Pluggy.InvestmentsTest do
       assert {:ok, %{results: [%{id: "inv-txn-uuid-001"}]}} =
                Investments.transactions(client, "inv-uuid-001")
     end
+
+    test "accepts an investment map instead of a string id" do
+      client = build_client()
+      investment = %{id: "inv-uuid-001", name: "Fund A"}
+
+      assert {:ok, %{results: [%{id: "inv-txn-uuid-001"}]}} =
+               Investments.transactions(client, investment)
+    end
   end
 
   describe "transactions!/2" do
@@ -67,6 +83,14 @@ defmodule Pluggy.InvestmentsTest do
 
       assert {:ok, %{results: [%{id: "inv-uuid-001"}]}, nil} =
                Investments.list_with_cursor(client, "item-uuid-001")
+    end
+
+    test "accepts an item map instead of a string id" do
+      client = build_client()
+      item = %{id: "item-uuid-001", name: "My Bank"}
+
+      assert {:ok, %{results: [%{id: "inv-uuid-001"}]}, nil} =
+               Investments.list_with_cursor(client, item)
     end
 
     test "returns results with cursor when more pages exist" do

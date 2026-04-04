@@ -20,6 +20,14 @@ defmodule Pluggy.TransactionsTest do
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
                Transactions.list(client, "account-uuid-001")
     end
+
+    test "accepts an account map instead of a string id" do
+      client = build_client()
+      account = %{id: "account-uuid-001", name: "Checking"}
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
+               Transactions.list(client, account)
+    end
   end
 
   describe "list!/2" do
@@ -69,6 +77,14 @@ defmodule Pluggy.TransactionsTest do
 
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, nil} =
                Transactions.list_with_cursor(client, "account-uuid-001")
+    end
+
+    test "accepts an account map instead of a string id" do
+      client = build_client()
+      account = %{id: "account-uuid-001", name: "Checking"}
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, nil} =
+               Transactions.list_with_cursor(client, account)
     end
 
     test "returns results with cursor when more pages exist" do

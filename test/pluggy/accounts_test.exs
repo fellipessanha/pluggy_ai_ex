@@ -20,6 +20,14 @@ defmodule Pluggy.AccountsTest do
       assert {:ok, %{results: [%{id: "account-uuid-001"}]}} =
                Accounts.list(client, "item-uuid-001")
     end
+
+    test "accepts an item map instead of a string id" do
+      client = build_client()
+      item = %{id: "item-uuid-001", name: "My Bank"}
+
+      assert {:ok, %{results: [%{id: "account-uuid-001"}]}} =
+               Accounts.list(client, item)
+    end
   end
 
   describe "list!/2" do
@@ -67,6 +75,14 @@ defmodule Pluggy.AccountsTest do
 
       assert {:ok, %{results: [%{id: "account-uuid-001"}]}, nil} =
                Accounts.list_with_cursor(client, "item-uuid-001")
+    end
+
+    test "accepts an item map instead of a string id" do
+      client = build_client()
+      item = %{id: "item-uuid-001", name: "My Bank"}
+
+      assert {:ok, %{results: [%{id: "account-uuid-001"}]}, nil} =
+               Accounts.list_with_cursor(client, item)
     end
 
     test "returns results with cursor when more pages exist" do
