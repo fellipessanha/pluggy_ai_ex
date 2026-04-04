@@ -85,14 +85,15 @@ if Code.ensure_loaded?(Kino.JS.Live) do
 
     @impl true
     def handle_event("connection_success", item_data, ctx) do
-      ctx = assign(ctx, item: item_data)
+      parsed_item = Pluggy.KeyTransform.to_snake(item_data["item"])
+      ctx = assign(ctx, item: parsed_item)
 
       case Map.get(ctx.assigns, :waiting) do
         nil ->
           {:noreply, ctx}
 
         from ->
-          Live.reply(from, item_data)
+          Live.reply(from, parsed_item)
           {:noreply, assign(ctx, waiting: nil)}
       end
     end

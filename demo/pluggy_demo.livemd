@@ -45,34 +45,6 @@ connectors_simplified =
 Kino.DataTable.new(connectors_simplified)
 ```
 
-## Search Connectors
-
-Filter connectors by name.
-
-```elixir
-search_input = Kino.Input.text("Search connectors")
-```
-
-```elixir
-search_term = Kino.Input.read(search_input) |> String.downcase()
-
-connectors_simplified
-|> Enum.filter(fn %{name: name} ->
-  name |> String.downcase() |> String.contains?(search_term)
-end)
-|> Kino.DataTable.new()
-```
-
-## Connect Token
-
-Generate a connect token for the Pluggy Connect widget.
-
-```elixir
-{:ok, connect_token} = Pluggy.Client.connect_token(client)
-IO.puts("Connect token: #{String.slice(connect_token, 0, 40)}...")
-connect_token
-```
-
 ## Pluggy Connect Widget
 
 Render the Pluggy Connect widget inline. Select a bank and complete the connection flow.
@@ -89,4 +61,66 @@ After completing the connection above, run this cell to retrieve the item data.
 
 ```elixir
 item = Pluggy.Connect.Kino.await_item(widget)
+```
+
+## Accounts
+
+Fetch the accounts for the connected item.
+
+```elixir
+accounts = Pluggy.Accounts.list(client, item) |> Pluggy.Unwrap.results()
+Kino.DataTable.new(accounts)
+```
+
+## Transactions
+
+Pass an account map directly — no need to extract the ID manually.
+
+```elixir
+transactions_map =
+  for account <- accounts, into: %{} do
+    transactions = Pluggy.Transactions.list(client, account) |> Pluggy.Unwrap.results()
+    {account.type, transactions}
+  end
+
+for {type, transactions} <- transactions_map do
+  %{name: String.capitalize(type), transaction_count: length(transactions)}
+end
+|> Kino.DataTable.new()
+```
+
+```elixir
+transaction_select =
+  transactions_map
+  |> Enum.map(fn {key, _v} = option -> {option, String.capitalize(key)} end)
+
+type_select = Kino.Input.select("Transaction type:", transaction_select)
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+{account_type, transactions} =
+  type_select
+  |> Kino.Input.read()
+
+Kino.DataTable.new(
+  transactions,
+  name: "\'#{String.capitalize(account_type)}\' transactions"
+)
+```
+
+## Investments
+
+Fetch investments for the item, then pass an investment map to get its transactions.
+
+```elixir
+investments = Pluggy.Investments.list(client, item) |> Pluggy.Unwrap.results()
+Kino.DataTable.new(investments)
+```
+
+```elixir
+investment = hd(investments)
+inv_transactions = Pluggy.Investments.transactions(client, investment) |> Pluggy.Unwrap.results()
+Kino.DataTable.new(inv_transactions)
 ```
