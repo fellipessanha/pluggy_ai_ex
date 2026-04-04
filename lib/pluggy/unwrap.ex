@@ -140,10 +140,12 @@ defmodule Pluggy.Unwrap do
   def all_results({:error, _} = error), do: error
 
   def all_results({:ok, _, _} = cursor_result) do
-    cursor_result
-    |> HTTP.stream_results()
-    |> Enum.to_list()
-    |> Enum.flat_map(&results/1)
+    items =
+      cursor_result
+      |> HTTP.stream_results()
+      |> Enum.flat_map(& &1.results)
+
+    {:ok, items}
   rescue
     e in RuntimeError -> {:error, e}
   end
