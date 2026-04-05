@@ -30,7 +30,7 @@ Add `pluggy_ai` to your dependencies:
 ```elixir
 def deps do
   [
-    {:pluggy_ai, github: "fellipessanha/pluggy_ai_ex"}
+    {:pluggy_ai, "~> 0.1.0"}
   ]
 end
 ```
