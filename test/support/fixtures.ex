@@ -83,6 +83,15 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  def account_balance do
+    %{
+      "id" => "account-uuid-001",
+      "itemId" => "item-uuid-001",
+      "balance" => 1234.56,
+      "currencyCode" => "BRL"
+    }
+  end
+
   def account_statements do
     %{
       "results" => [
@@ -97,6 +106,10 @@ defmodule Pluggy.Test.Fixtures do
   end
 
   # --- Transactions ---
+
+  def transactions_v2 do
+    %{"results" => [transaction()], "total" => 1, "nextCursor" => nil}
+  end
 
   def transactions do
     %{
@@ -189,6 +202,107 @@ defmodule Pluggy.Test.Fixtures do
 
   def payment_schedules do
     %{"results" => [payment_pix_schedule()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  # --- Payment Recipients ---
+
+  def payment_recipient do
+    %{"id" => "recipient-uuid-001", "name" => "Test Recipient", "taxNumber" => "12345678901"}
+  end
+
+  def payment_recipients do
+    %{"results" => [payment_recipient()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def payment_recipient_institution do
+    %{"id" => "institution-uuid-001", "name" => "Test Bank", "ispb" => "00000000"}
+  end
+
+  def payment_recipient_institutions do
+    %{
+      "results" => [payment_recipient_institution()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  # --- Payment Customers ---
+
+  def payment_customer do
+    %{"id" => "customer-uuid-001", "name" => "Test Customer", "taxNumber" => "12345678901"}
+  end
+
+  def payment_customers do
+    %{"results" => [payment_customer()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  # --- Merchants ---
+
+  def merchants do
+    %{
+      "results" => [merchant()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def merchant do
+    %{"id" => "merchant-uuid-001", "name" => "Test Merchant", "cnpj" => "12345678901234"}
+  end
+
+  # --- Bills ---
+
+  def bills do
+    %{
+      "results" => [bill()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def bill do
+    %{
+      "id" => "bill-uuid-001",
+      "accountId" => "account-uuid-001",
+      "dueDate" => "2024-01-15",
+      "amount" => 150.0
+    }
+  end
+
+  # --- Categories ---
+
+  def category do
+    %{"id" => "cat-uuid-001", "description" => "Food & Dining", "parentId" => nil}
+  end
+
+  def categories do
+    [category()]
+  end
+
+  def category_rule do
+    %{"id" => "rule-uuid-001", "categoryId" => "cat-uuid-001"}
+  end
+
+  def category_rules do
+    [category_rule()]
+  end
+
+  # --- Webhooks ---
+
+  def webhooks do
+    %{"results" => [webhook()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def webhook do
+    %{
+      "id" => "webhook-uuid-001",
+      "event" => "item/created",
+      "url" => "https://example.com/hook",
+      "enabled" => true
+    }
   end
 
   # --- Loans ---
