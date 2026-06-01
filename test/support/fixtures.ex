@@ -83,6 +83,15 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  def account_balance do
+    %{
+      "id" => "account-uuid-001",
+      "itemId" => "item-uuid-001",
+      "balance" => 1234.56,
+      "currencyCode" => "BRL"
+    }
+  end
+
   def account_statements do
     %{
       "results" => [
@@ -97,6 +106,10 @@ defmodule Pluggy.Test.Fixtures do
   end
 
   # --- Transactions ---
+
+  def transactions_v2 do
+    %{"results" => [transaction()], "total" => 1, "nextCursor" => nil}
+  end
 
   def transactions do
     %{

@@ -6,6 +6,7 @@ defmodule Pluggy.Transactions do
   alias Pluggy.{Client, HTTP}
 
   @prefix_url "/transactions"
+  @v2_url "/v2#{@prefix_url}"
 
   @doc """
   Lists transactions for a given account.
@@ -19,10 +20,34 @@ defmodule Pluggy.Transactions do
 
   ## Options
 
+  The `:version` option selects the API version and determines which other
+  options are accepted:
+
+    * `:version` - API version to use (default: `:v2`)
+
+  ### v2 options (default, `GET /v2/transactions`)
+
+    * `:date_from` - Start date filter (ISO 8601)
+    * `:date_to` - End date filter (ISO 8601)
+    * `:created_at_from` - Filter by creation date
+    * `:ids` - Comma-separated list of transaction IDs
+    * `:after` - Cursor token for the next page
+
+  ### v1 options (legacy, `GET /transactions`)
+
     * `:from` - Start date filter
     * `:to` - End date filter
     * `:page_size` - Number of results per page (1-500)
     * `:page` - Page number
+
+  ## Examples
+
+      # v2 (default)
+      Pluggy.Transactions.list(client, "account-uuid-001")
+      Pluggy.Transactions.list(client, "account-uuid-001", date_from: "2025-01-01")
+
+      # v1 (legacy)
+      Pluggy.Transactions.list(client, "account-uuid-001", version: :v1, from: "2025-01-01")
   """
   @spec list(Client.t(), String.t() | map(), keyword()) ::
           {:ok, term()} | {:error, Pluggy.Error.t()}
@@ -30,7 +55,15 @@ defmodule Pluggy.Transactions do
   def list(%Client{} = client, %{id: account_id}, opts), do: list(client, account_id, opts)
 
   def list(%Client{} = client, account_id, opts) when is_binary(account_id) do
-    HTTP.get(client, "#{@prefix_url}", params: [account_id: account_id] ++ opts)
+    {version, opts} = Keyword.pop(opts, :version, :v2)
+
+    path =
+      case version do
+        :v1 -> @prefix_url
+        :v2 -> @v2_url
+      end
+
+    HTTP.get(client, path, params: [account_id: account_id] ++ opts)
   end
 
   @spec list!(Client.t(), String.t() | map(), keyword()) :: term()
@@ -45,21 +78,35 @@ defmodule Pluggy.Transactions do
   The second argument accepts either an account ID string or an account map —
   the `:id` field is extracted automatically.
 
-  Returns `{:ok, response, cursor}` where `cursor` is a `%Pluggy.HTTP.Cursor{}`
-  when more pages are available, or `nil` when on the last page.
+  For `:v2` (default): Returns `{:ok, response, next_cursor}` where `next_cursor`
+  is the string token from `response.next_cursor`, or `nil` when there are no more
+  pages. Pass the token as `:after` in the next call.
 
-  Pass the cursor to `Pluggy.HTTP.with_cursor/1` to fetch the next page.
+  For `:v1` (legacy): Returns `{:ok, response, cursor}` where `cursor` is a
+  `%Pluggy.HTTP.Cursor{}` when more pages are available, or `nil` when on the last
+  page. Pass the cursor to `Pluggy.HTTP.with_cursor/1` to fetch the next page.
   """
   @spec list_with_cursor(Client.t(), String.t() | map(), keyword()) ::
-          {:ok, map(), HTTP.Cursor.t() | nil} | {:error, Pluggy.Error.t()}
+          {:ok, map(), HTTP.Cursor.t() | String.t() | nil} | {:error, Pluggy.Error.t()}
   def list_with_cursor(client, account_or_id, opts \\ [])
 
   def list_with_cursor(%Client{} = client, %{id: account_id}, opts),
     do: list_with_cursor(client, account_id, opts)
 
   def list_with_cursor(%Client{} = client, account_id, opts) when is_binary(account_id) do
-    fetcher = fn page -> list(client, account_id, Keyword.put(opts, :page, page)) end
-    HTTP.with_cursor(fetcher)
+    version = Keyword.get(opts, :version, :v2)
+
+    case version do
+      :v1 ->
+        fetcher = fn page -> list(client, account_id, Keyword.put(opts, :page, page)) end
+        HTTP.with_cursor(fetcher)
+
+      :v2 ->
+        case list(client, account_id, [{:version, :v2} | opts]) do
+          {:ok, response} -> {:ok, response, Map.get(response, :next_cursor)}
+          {:error, _} = error -> error
+        end
+    end
   end
 
   @doc """
