@@ -131,6 +131,20 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Payment Intents ---
+
+  defp handle(conn, "GET", "/payments/intents", _body) do
+    send_json(conn, 200, Fixtures.payment_intents())
+  end
+
+  defp handle(conn, "POST", "/payments/intents", _body) do
+    send_json(conn, 200, Fixtures.payment_intent())
+  end
+
+  defp handle(conn, "GET", "/payments/intents/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_intent())
+  end
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do
