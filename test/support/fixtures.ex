@@ -336,4 +336,32 @@ defmodule Pluggy.Test.Fixtures do
       "currencyCode" => "BRL"
     }
   end
+
+  # --- Smart Transfers ---
+
+  def smart_transfer_preauthorization do
+    %{"id" => "preauth-uuid-001", "status" => "ACTIVE"}
+  end
+
+  def smart_transfer_preauthorizations do
+    %{
+      "results" => [smart_transfer_preauthorization()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def smart_transfer_payment do
+    %{"id" => "st-payment-uuid-001", "status" => "COMPLETED", "amount" => 100.0}
+  end
+
+  def smart_transfer_payments do
+    %{
+      "results" => [smart_transfer_payment()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
 end
