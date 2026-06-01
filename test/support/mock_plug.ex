@@ -136,6 +136,19 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Webhooks ---
+
+  defp handle(conn, "GET", "/webhooks", _body), do: send_json(conn, 200, Fixtures.webhooks())
+  defp handle(conn, "POST", "/webhooks", _body), do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "GET", "/webhooks/" <> _id, _body),
+    do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "PATCH", "/webhooks/" <> _id, _body),
+    do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "DELETE", "/webhooks/" <> _id, _body), do: send_json(conn, 204, %{})
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do

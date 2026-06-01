@@ -182,6 +182,21 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Webhooks ---
+
+  def webhooks do
+    %{"results" => [webhook()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def webhook do
+    %{
+      "id" => "webhook-uuid-001",
+      "event" => "item/created",
+      "url" => "https://example.com/hook",
+      "enabled" => true
+    }
+  end
+
   # --- Loans ---
 
   def loans do
