@@ -169,6 +169,21 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Merchants ---
+
+  def merchants do
+    %{
+      "results" => [merchant()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def merchant do
+    %{"id" => "merchant-uuid-001", "name" => "Test Merchant", "cnpj" => "12345678901234"}
+  end
+
   # --- Loans ---
 
   def loans do
