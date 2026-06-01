@@ -182,6 +182,28 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Payment Requests ---
+
+  def payment_request do
+    %{"id" => "request-uuid-001", "status" => "CREATED", "amount" => 100.0}
+  end
+
+  def payment_requests do
+    %{"results" => [payment_request()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def payment_pix_schedule do
+    %{"id" => "schedule-uuid-001", "status" => "SCHEDULED"}
+  end
+
+  def payment_pix_schedules do
+    %{"results" => [payment_pix_schedule()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def payment_schedules do
+    %{"results" => [payment_pix_schedule()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
   # --- Payment Recipients ---
 
   def payment_recipient do
