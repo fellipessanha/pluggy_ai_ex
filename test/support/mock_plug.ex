@@ -156,6 +156,70 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.payment_intent())
   end
 
+  # --- Payment Requests ---
+
+  defp handle(conn, "GET", "/payments/requests", _body) do
+    send_json(conn, 200, Fixtures.payment_requests())
+  end
+
+  defp handle(conn, "POST", "/payments/requests/automatic-pix", _body) do
+    send_json(conn, 200, Fixtures.payment_request())
+  end
+
+  defp handle(conn, "POST", "/payments/requests/pix-qr", _body) do
+    send_json(conn, 200, Fixtures.payment_request())
+  end
+
+  defp handle(conn, "POST", "/payments/requests", _body) do
+    send_json(conn, 200, Fixtures.payment_request())
+  end
+
+  defp handle(conn, "GET", "/payments/requests/" <> rest, _body) do
+    case String.split(rest, "/") do
+      [_id, "automatic-pix", "schedules", _payment_id] ->
+        send_json(conn, 200, Fixtures.payment_pix_schedule())
+
+      [_id, "automatic-pix", "schedules"] ->
+        send_json(conn, 200, Fixtures.payment_pix_schedules())
+
+      [_id, "schedules"] ->
+        send_json(conn, 200, Fixtures.payment_schedules())
+
+      [_id] ->
+        send_json(conn, 200, Fixtures.payment_request())
+    end
+  end
+
+  defp handle(conn, "POST", "/payments/requests/" <> rest, _body) do
+    case String.split(rest, "/") do
+      [_id, "automatic-pix", "cancel"] ->
+        send_no_content(conn)
+
+      [_id, "automatic-pix", "schedule"] ->
+        send_json(conn, 200, Fixtures.payment_request())
+
+      [_id, "automatic-pix", "schedules", _s, "cancel"] ->
+        send_no_content(conn)
+
+      [_id, "automatic-pix", "schedules", _s, "retry"] ->
+        send_no_content(conn)
+
+      [_id, "schedules", "cancel"] ->
+        send_no_content(conn)
+
+      [_id, "schedules", _sid, "cancel"] ->
+        send_no_content(conn)
+    end
+  end
+
+  defp handle(conn, "PATCH", "/payments/requests/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_request())
+  end
+
+  defp handle(conn, "DELETE", "/payments/requests/" <> _id, _body) do
+    send_no_content(conn)
+  end
+
   # --- Payment Recipients ---
 
   defp handle(conn, "GET", "/payments/recipients/institutions", _body) do
@@ -259,5 +323,9 @@ defmodule Pluggy.Test.MockPlug do
     conn
     |> put_resp_content_type("application/json")
     |> send_resp(status, JSON.encode!(body))
+  end
+
+  defp send_no_content(conn) do
+    send_resp(conn, 204, "")
   end
 end
