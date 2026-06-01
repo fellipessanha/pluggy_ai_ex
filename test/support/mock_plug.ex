@@ -126,6 +126,12 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.identity())
   end
 
+  # --- Merchants ---
+
+  defp handle(conn, "GET", "/merchants", _body) do
+    send_json(conn, 200, Fixtures.merchants())
+  end
+
   # --- Loans ---
 
   defp handle(conn, "GET", "/loans", _body) do
