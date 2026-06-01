@@ -79,12 +79,17 @@ defmodule Pluggy.Test.MockPlug do
 
   defp handle(conn, "GET", "/accounts/" <> rest, _body) do
     case String.split(rest, "/") do
+      [_id, "balance"] -> send_json(conn, 200, Fixtures.account_balance())
       [_id, "statements"] -> send_json(conn, 200, Fixtures.account_statements())
       [_id] -> send_json(conn, 200, Fixtures.account())
     end
   end
 
   # --- Transactions ---
+
+  defp handle(conn, "GET", "/v2/transactions", _body) do
+    send_json(conn, 200, Fixtures.transactions_v2())
+  end
 
   defp handle(conn, "GET", "/transactions", _body) do
     send_json(conn, 200, Fixtures.transactions())

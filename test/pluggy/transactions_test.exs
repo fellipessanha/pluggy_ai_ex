@@ -14,7 +14,7 @@ defmodule Pluggy.TransactionsTest do
   end
 
   describe "list/2" do
-    test "returns transactions for an account" do
+    test "returns transactions for an account using v2 by default" do
       client = build_client()
 
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
@@ -27,6 +27,20 @@ defmodule Pluggy.TransactionsTest do
 
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
                Transactions.list(client, account)
+    end
+
+    test "uses v2 endpoint when version: :v2 is given" do
+      client = build_client()
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
+               Transactions.list(client, "account-uuid-001", version: :v2)
+    end
+
+    test "uses v1 endpoint when version: :v1 is given" do
+      client = build_client()
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}} =
+               Transactions.list(client, "account-uuid-001", version: :v1)
     end
   end
 
@@ -72,11 +86,25 @@ defmodule Pluggy.TransactionsTest do
   end
 
   describe "list_with_cursor/3" do
-    test "returns results with nil cursor when on last page" do
+    test "uses v2 by default and returns nil next_cursor when none" do
       client = build_client()
 
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, nil} =
                Transactions.list_with_cursor(client, "account-uuid-001")
+    end
+
+    test "uses v2 when version: :v2 and returns nil next_cursor when none" do
+      client = build_client()
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, nil} =
+               Transactions.list_with_cursor(client, "account-uuid-001", version: :v2)
+    end
+
+    test "uses v1 when version: :v1 and returns nil cursor when on last page" do
+      client = build_client()
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, nil} =
+               Transactions.list_with_cursor(client, "account-uuid-001", version: :v1)
     end
 
     test "accepts an account map instead of a string id" do
@@ -87,7 +115,35 @@ defmodule Pluggy.TransactionsTest do
                Transactions.list_with_cursor(client, account)
     end
 
-    test "returns results with cursor when more pages exist" do
+    test "v2: returns next_cursor token when response has one" do
+      plug = fn conn ->
+        case {conn.method, conn.request_path} do
+          {"POST", "/auth"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(200, JSON.encode!(%{"apiKey" => "k"}))
+
+          {"GET", "/v2/transactions"} ->
+            conn
+            |> Plug.Conn.put_resp_content_type("application/json")
+            |> Plug.Conn.send_resp(
+              200,
+              JSON.encode!(%{
+                "results" => [%{"id" => "txn-uuid-001"}],
+                "total" => 2,
+                "nextCursor" => "cursor-token-abc"
+              })
+            )
+        end
+      end
+
+      {:ok, client} = Pluggy.Client.new("test_id", "test_secret", req_options: [plug: plug])
+
+      assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, "cursor-token-abc"} =
+               Transactions.list_with_cursor(client, "account-uuid-001")
+    end
+
+    test "v1: returns results with cursor when more pages exist" do
       plug = fn conn ->
         case {conn.method, conn.request_path} do
           {"POST", "/auth"} ->
@@ -113,7 +169,7 @@ defmodule Pluggy.TransactionsTest do
       {:ok, client} = Pluggy.Client.new("test_id", "test_secret", req_options: [plug: plug])
 
       assert {:ok, %{results: [%{id: "txn-uuid-001"}]}, %HTTP.Cursor{}} =
-               Transactions.list_with_cursor(client, "account-uuid-001")
+               Transactions.list_with_cursor(client, "account-uuid-001", version: :v1)
     end
   end
 end
