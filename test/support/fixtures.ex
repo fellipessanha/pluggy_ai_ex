@@ -169,6 +169,26 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Bills ---
+
+  def bills do
+    %{
+      "results" => [bill()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
+  def bill do
+    %{
+      "id" => "bill-uuid-001",
+      "accountId" => "account-uuid-001",
+      "dueDate" => "2024-01-15",
+      "amount" => 150.0
+    }
+  end
+
   # --- Loans ---
 
   def loans do
