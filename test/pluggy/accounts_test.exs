@@ -69,6 +69,24 @@ defmodule Pluggy.AccountsTest do
     end
   end
 
+  describe "balance/2" do
+    test "returns the balance for an account" do
+      client = build_client()
+
+      assert {:ok, %{id: "account-uuid-001", balance: 1234.56, currency_code: "BRL"}} =
+               Accounts.balance(client, "account-uuid-001")
+    end
+  end
+
+  describe "balance!/2" do
+    test "returns unwrapped result" do
+      client = build_client()
+
+      assert %{id: "account-uuid-001", balance: 1234.56} =
+               Accounts.balance!(client, "account-uuid-001")
+    end
+  end
+
   describe "list_with_cursor/3" do
     test "returns results with nil cursor when on last page" do
       client = build_client()
