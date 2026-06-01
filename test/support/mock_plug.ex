@@ -131,6 +131,36 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Payment Recipients ---
+
+  defp handle(conn, "GET", "/payments/recipients/institutions", _body) do
+    send_json(conn, 200, Fixtures.payment_recipient_institutions())
+  end
+
+  defp handle(conn, "GET", "/payments/recipients/institutions/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_recipient_institution())
+  end
+
+  defp handle(conn, "GET", "/payments/recipients", _body) do
+    send_json(conn, 200, Fixtures.payment_recipients())
+  end
+
+  defp handle(conn, "POST", "/payments/recipients", _body) do
+    send_json(conn, 200, Fixtures.payment_recipient())
+  end
+
+  defp handle(conn, "GET", "/payments/recipients/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_recipient())
+  end
+
+  defp handle(conn, "PATCH", "/payments/recipients/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_recipient())
+  end
+
+  defp handle(conn, "DELETE", "/payments/recipients/" <> _id, _body) do
+    send_resp(conn, 204, "")
+  end
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do

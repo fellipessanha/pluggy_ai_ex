@@ -169,6 +169,29 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Payment Recipients ---
+
+  def payment_recipient do
+    %{"id" => "recipient-uuid-001", "name" => "Test Recipient", "taxNumber" => "12345678901"}
+  end
+
+  def payment_recipients do
+    %{"results" => [payment_recipient()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
+  def payment_recipient_institution do
+    %{"id" => "institution-uuid-001", "name" => "Test Bank", "ispb" => "00000000"}
+  end
+
+  def payment_recipient_institutions do
+    %{
+      "results" => [payment_recipient_institution()],
+      "total" => 1,
+      "totalPages" => 1,
+      "page" => 1
+    }
+  end
+
   # --- Loans ---
 
   def loans do
