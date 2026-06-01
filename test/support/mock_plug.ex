@@ -131,6 +131,30 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Boletos ---
+
+  defp handle(conn, "POST", "/boleto-connections/from-item", _body) do
+    send_json(conn, 200, Fixtures.boleto_connection())
+  end
+
+  defp handle(conn, "POST", "/boleto-connections", _body) do
+    send_json(conn, 200, Fixtures.boleto_connection())
+  end
+
+  defp handle(conn, "POST", "/boletos", _body) do
+    send_json(conn, 200, Fixtures.boleto())
+  end
+
+  defp handle(conn, "GET", "/boletos/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.boleto())
+  end
+
+  defp handle(conn, "POST", "/boletos/" <> _rest, _body) do
+    conn
+    |> put_resp_content_type("application/json")
+    |> send_resp(204, "")
+  end
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do

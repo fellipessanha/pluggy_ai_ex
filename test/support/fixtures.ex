@@ -169,6 +169,25 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Boletos ---
+
+  def boleto do
+    %{
+      "id" => "boleto-uuid-001",
+      "status" => "ACTIVE",
+      "dueDate" => "2024-01-15",
+      "amount" => 100.0
+    }
+  end
+
+  def boleto_connection do
+    %{
+      "id" => "boleto-conn-uuid-001",
+      "itemId" => "item-uuid-001",
+      "boletoId" => "boleto-uuid-001"
+    }
+  end
+
   # --- Loans ---
 
   def loans do
