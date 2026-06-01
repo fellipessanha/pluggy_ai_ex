@@ -82,4 +82,25 @@ defmodule Pluggy.Accounts do
 
   @spec statements!(Client.t(), String.t()) :: term()
   def statements!(%Client{} = client, id), do: HTTP.unwrap_tuple!(statements(client, id))
+
+  @doc """
+  Fetches the balance for an account.
+
+  > #### Rate limiting {: .warning}
+  >
+  > This endpoint may return HTTP 429 (Too Many Requests) if called too frequently.
+  > Implement back-off logic if you call this endpoint in tight loops.
+
+  ## Examples
+
+      Pluggy.Accounts.balance(client, "account-uuid-001")
+      #=> {:ok, %{id: "account-uuid-001", balance: 1234.56, currency_code: "BRL"}}
+  """
+  @spec balance(Client.t(), String.t()) :: {:ok, term()} | {:error, Pluggy.Error.t()}
+  def balance(%Client{} = client, id) do
+    HTTP.get(client, "#{@prefix_url}/#{id}/balance")
+  end
+
+  @spec balance!(Client.t(), String.t()) :: term()
+  def balance!(%Client{} = client, id), do: HTTP.unwrap_tuple!(balance(client, id))
 end
