@@ -173,11 +173,11 @@ defmodule Pluggy.HTTP do
     req_opts = Keyword.merge(opts, url: path, method: method)
 
     case Req.request(req, req_opts) do
-      {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
-        {:ok, body}
-
       {:ok, %Req.Response{status: 204}} ->
         {:ok, nil}
+
+      {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
+        {:ok, body}
 
       {:ok, %Req.Response{body: body}} when is_map(body) ->
         {:error, Error.from_response(body)}

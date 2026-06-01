@@ -92,7 +92,7 @@ defmodule Pluggy.WebhooksTest do
   describe "delete!/2" do
     test "returns nil on success" do
       client = build_client()
-      assert Webhooks.delete!(client, "webhook-uuid-001")
+      assert nil == Webhooks.delete!(client, "webhook-uuid-001")
     end
   end
 end
