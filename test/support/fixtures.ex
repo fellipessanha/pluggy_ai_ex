@@ -182,6 +182,16 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Payment Intents ---
+
+  def payment_intent do
+    %{"id" => "intent-uuid-001", "status" => "CREATED", "paymentRequestId" => "request-uuid-001"}
+  end
+
+  def payment_intents do
+    %{"results" => [payment_intent()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
   # --- Payment Requests ---
 
   def payment_request do
