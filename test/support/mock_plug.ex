@@ -79,12 +79,17 @@ defmodule Pluggy.Test.MockPlug do
 
   defp handle(conn, "GET", "/accounts/" <> rest, _body) do
     case String.split(rest, "/") do
+      [_id, "balance"] -> send_json(conn, 200, Fixtures.account_balance())
       [_id, "statements"] -> send_json(conn, 200, Fixtures.account_statements())
       [_id] -> send_json(conn, 200, Fixtures.account())
     end
   end
 
   # --- Transactions ---
+
+  defp handle(conn, "GET", "/v2/transactions", _body) do
+    send_json(conn, 200, Fixtures.transactions_v2())
+  end
 
   defp handle(conn, "GET", "/transactions", _body) do
     send_json(conn, 200, Fixtures.transactions())
@@ -119,6 +124,12 @@ defmodule Pluggy.Test.MockPlug do
 
   defp handle(conn, "GET", "/identity/" <> _id, _body) do
     send_json(conn, 200, Fixtures.identity())
+  end
+
+  # --- Merchants ---
+
+  defp handle(conn, "GET", "/merchants", _body) do
+    send_json(conn, 200, Fixtures.merchants())
   end
 
   # --- Loans ---
@@ -160,6 +171,69 @@ defmodule Pluggy.Test.MockPlug do
   defp handle(conn, "DELETE", "/payments/recipients/" <> _id, _body) do
     send_resp(conn, 204, "")
   end
+
+  # --- Payment Customers ---
+
+  defp handle(conn, "GET", "/payments/customers", _body) do
+    send_json(conn, 200, Fixtures.payment_customers())
+  end
+
+  defp handle(conn, "POST", "/payments/customers", _body) do
+    send_json(conn, 200, Fixtures.payment_customer())
+  end
+
+  defp handle(conn, "GET", "/payments/customers/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_customer())
+  end
+
+  defp handle(conn, "PATCH", "/payments/customers/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.payment_customer())
+  end
+
+  defp handle(conn, "DELETE", "/payments/customers/" <> _id, _body) do
+    send_resp(conn, 204, "")
+  end
+
+  # --- Bills ---
+
+  defp handle(conn, "GET", "/bills", _body) do
+    send_json(conn, 200, Fixtures.bills())
+  end
+
+  defp handle(conn, "GET", "/bills/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.bill())
+  end
+
+  # --- Categories ---
+
+  defp handle(conn, "GET", "/categories/rules", _body) do
+    send_json(conn, 200, Fixtures.category_rules())
+  end
+
+  defp handle(conn, "POST", "/categories/rules", _body) do
+    send_json(conn, 200, Fixtures.category_rule())
+  end
+
+  defp handle(conn, "GET", "/categories", _body) do
+    send_json(conn, 200, Fixtures.categories())
+  end
+
+  defp handle(conn, "GET", "/categories/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.category())
+  end
+
+  # --- Webhooks ---
+
+  defp handle(conn, "GET", "/webhooks", _body), do: send_json(conn, 200, Fixtures.webhooks())
+  defp handle(conn, "POST", "/webhooks", _body), do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "GET", "/webhooks/" <> _id, _body),
+    do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "PATCH", "/webhooks/" <> _id, _body),
+    do: send_json(conn, 200, Fixtures.webhook())
+
+  defp handle(conn, "DELETE", "/webhooks/" <> _id, _body), do: send_json(conn, 204, %{})
 
   # --- Catch-all ---
 
