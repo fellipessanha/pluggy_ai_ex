@@ -131,6 +131,35 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Smart Transfers ---
+
+  defp handle(conn, "GET", "/smart-transfers/preauthorizations", _body) do
+    send_json(conn, 200, Fixtures.smart_transfer_preauthorizations())
+  end
+
+  defp handle(conn, "POST", "/smart-transfers/preauthorizations", _body) do
+    send_json(conn, 200, Fixtures.smart_transfer_preauthorization())
+  end
+
+  defp handle(conn, "GET", "/smart-transfers/preauthorizations/" <> rest, _body) do
+    case String.split(rest, "/") do
+      [_id, "payments"] -> send_json(conn, 200, Fixtures.smart_transfer_payments())
+      [_id] -> send_json(conn, 200, Fixtures.smart_transfer_preauthorization())
+    end
+  end
+
+  defp handle(conn, "POST", "/smart-transfers/preauthorizations/" <> _rest, _body) do
+    send_json(conn, 200, Fixtures.smart_transfer_payment())
+  end
+
+  defp handle(conn, "POST", "/smart-transfers/payments", _body) do
+    send_json(conn, 200, Fixtures.smart_transfer_payment())
+  end
+
+  defp handle(conn, "GET", "/smart-transfers/payments/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.smart_transfer_payment())
+  end
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do
