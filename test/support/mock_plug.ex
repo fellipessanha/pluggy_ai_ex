@@ -131,6 +131,24 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Categories ---
+
+  defp handle(conn, "GET", "/categories/rules", _body) do
+    send_json(conn, 200, Fixtures.category_rules())
+  end
+
+  defp handle(conn, "POST", "/categories/rules", _body) do
+    send_json(conn, 200, Fixtures.category_rule())
+  end
+
+  defp handle(conn, "GET", "/categories", _body) do
+    send_json(conn, 200, Fixtures.categories())
+  end
+
+  defp handle(conn, "GET", "/categories/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.category())
+  end
+
   # --- Catch-all ---
 
   defp handle(conn, method, path, _body) do

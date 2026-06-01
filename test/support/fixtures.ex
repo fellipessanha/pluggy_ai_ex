@@ -169,6 +169,24 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Categories ---
+
+  def category do
+    %{"id" => "cat-uuid-001", "description" => "Food & Dining", "parentId" => nil}
+  end
+
+  def categories do
+    [category()]
+  end
+
+  def category_rule do
+    %{"id" => "rule-uuid-001", "categoryId" => "cat-uuid-001"}
+  end
+
+  def category_rules do
+    [category_rule()]
+  end
+
   # --- Loans ---
 
   def loans do
