@@ -85,6 +85,16 @@ session = Pluggy.Session.with_item(session, item_data)
 | `Pluggy.Investments`  | List investments and investment transactions                |
 | `Pluggy.Identity`     | Retrieve identity/KYC data                                  |
 | `Pluggy.Loans`        | List loan data                                              |
+| `Pluggy.Bills`        | List and retrieve bills for an item                         |
+| `Pluggy.Categories`   | List transaction categories and manage category rules       |
+| `Pluggy.Merchants`    | Retrieve merchant data                                      |
+| `Pluggy.Boletos`      | Create and retrieve Brazilian boleto payment slips          |
+| `Pluggy.SmartTransfers` | Schedule and manage automated smart transfers             |
+| `Pluggy.Webhooks`     | Create and manage webhooks for real-time event notifications |
+| `Pluggy.Payments.Customers`  | Manage payment customers (individuals and businesses) |
+| `Pluggy.Payments.Recipients` | Manage payment recipients (payment destinations)      |
+| `Pluggy.Payments.Requests`   | Create and manage payment initiation requests         |
+| `Pluggy.Payments.Intents`    | Create and manage payment intents                     |
 | `Pluggy.Session`      | Stateless session convenience wrapper                       |
 | `Pluggy.Unwrap`       | Helpers for unwrapping and paginating API responses         |
 | `Pluggy.HTTP.Cursor`  | Opaque cursor struct for page-by-page iteration             |
