@@ -169,6 +169,16 @@ defmodule Pluggy.Test.Fixtures do
     }
   end
 
+  # --- Payment Customers ---
+
+  def payment_customer do
+    %{"id" => "customer-uuid-001", "name" => "Test Customer", "taxNumber" => "12345678901"}
+  end
+
+  def payment_customers do
+    %{"results" => [payment_customer()], "total" => 1, "totalPages" => 1, "page" => 1}
+  end
+
   # --- Loans ---
 
   def loans do
