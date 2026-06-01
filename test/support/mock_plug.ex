@@ -136,6 +136,16 @@ defmodule Pluggy.Test.MockPlug do
     send_json(conn, 200, Fixtures.loan())
   end
 
+  # --- Bills ---
+
+  defp handle(conn, "GET", "/bills", _body) do
+    send_json(conn, 200, Fixtures.bills())
+  end
+
+  defp handle(conn, "GET", "/bills/" <> _id, _body) do
+    send_json(conn, 200, Fixtures.bill())
+  end
+
   # --- Categories ---
 
   defp handle(conn, "GET", "/categories/rules", _body) do
