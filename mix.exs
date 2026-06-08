@@ -4,7 +4,7 @@ defmodule PluggyAiEx.MixProject do
   def project do
     [
       app: :pluggy_ai,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.19",
       name: "PluggyAI",
       description: "Elixir client library for the Pluggy API",
