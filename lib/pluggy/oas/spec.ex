@@ -1,7 +1,27 @@
 defmodule Pluggy.OAS.Spec do
   @moduledoc false
-  # Pure extraction of response map keys from a decoded OpenAPI 3 document.
-  # No I/O — kept separate so it's testable and callable at compile time.
+  # Access to the OpenAPI 3 spec and pure extraction over it. Centralizes the
+  # config-driven path and file read so compile-time codegen modules
+  # (e.g. Pluggy.OAS.KeyConversion) share one loader.
+
+  @doc """
+  Compile-time path to the OAS spec.
+
+  Config-driven (`:pluggy_ai, :oas_spec_path`); defaults to the vendored copy in
+  `priv/oas3.json` for consuming apps that don't override it.
+  """
+  @spec_path Application.compile_env(
+               :pluggy_ai,
+               :oas_spec_path,
+               Application.app_dir(:pluggy_ai, "priv/oas3.json")
+             )
+
+  @spec path() :: Path.t()
+  def path, do: @spec_path
+
+  @doc "Reads and decodes the OAS spec. Raises if it's missing or malformed."
+  @spec load!() :: map()
+  def load!, do: path() |> File.read!() |> JSON.decode!()
 
   @doc """
   Returns the sorted, deduped list of every raw (camelCase) key reachable from a
@@ -75,55 +95,4 @@ defmodule Pluggy.OAS.Spec do
     do: Enum.reduce(list, keys, &collect(&1, schemas, visited, &2))
 
   defp reduce_list(keys, _list, _schemas, _visited), do: keys
-end
-
-defmodule Pluggy.OAS do
-  @moduledoc """
-  Maps Pluggy API response keys (camelCase strings) to snake_case atoms.
-
-  The lookup clauses are generated at compile time — one per key reachable from a
-  response body in `design-docs/oas3.json` — so known keys become compile-time
-  atom literals with no runtime `String.to_atom`.
-
-      Pluggy.OAS.key_as_atom("itemId")   #=> :item_id
-      Pluggy.OAS.key_as_atom("unknown")  #=> "unknown"   (passthrough)
-      Pluggy.OAS.key_as_atom!("unknown") #=> ** (ArgumentError)
-  """
-
-  @spec_path Path.expand("../../design-docs/oas3.json", __DIR__)
-  @external_resource @spec_path
-
-  # ponytail: fail loud at compile time if the (untracked) spec is missing.
-  unless File.exists?(@spec_path) do
-    raise "Pluggy.OAS: OpenAPI spec not found at #{@spec_path}. " <>
-            "The spec must be present to compile."
-  end
-
-  @key_strings @spec_path
-               |> File.read!()
-               |> JSON.decode!()
-               |> Pluggy.OAS.Spec.response_key_strings()
-
-  @doc """
-  Converts a known response key string to its snake_case atom. Unknown keys are
-  returned unchanged as strings (no runtime atom creation).
-  """
-  @spec key_as_atom(String.t()) :: atom() | String.t()
-  for k <- @key_strings do
-    def key_as_atom(unquote(k)), do: unquote(k |> Macro.underscore() |> String.to_atom())
-  end
-
-  def key_as_atom(key) when is_binary(key), do: key
-
-  @doc """
-  Like `key_as_atom/1`, but raises `ArgumentError` on an unknown key instead of
-  passing it through.
-  """
-  @spec key_as_atom!(String.t()) :: atom()
-  for k <- @key_strings do
-    def key_as_atom!(unquote(k)), do: unquote(k |> Macro.underscore() |> String.to_atom())
-  end
-
-  def key_as_atom!(key) when is_binary(key),
-    do: key |> Macro.underscore() |> String.to_existing_atom()
 end

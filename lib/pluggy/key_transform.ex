@@ -1,10 +1,12 @@
 defmodule Pluggy.KeyTransform do
   @moduledoc false
 
+  alias Pluggy.OAS.KeyConversion
+
   @doc """
   Converts a map (or list of maps) from camelCase string keys to snake_case atom keys, recursively.
 
-  Keys are mapped via `Pluggy.OAS.key_as_atom/1`, so keys known to the OpenAPI
+  Keys are mapped via `Pluggy.OAS.KeyConversion.key_as_atom/1`, so keys known to the OpenAPI
   spec become atoms; unknown keys are left as strings.
 
   ## Examples
@@ -21,7 +23,7 @@ defmodule Pluggy.KeyTransform do
   @spec to_snake(term()) :: term()
   def to_snake(%{} = map) do
     Map.new(map, fn {key, value} ->
-      {Pluggy.OAS.key_as_atom(to_string(key)), to_snake(value)}
+      {KeyConversion.key_as_atom(to_string(key)), to_snake(value)}
     end)
   end
 
