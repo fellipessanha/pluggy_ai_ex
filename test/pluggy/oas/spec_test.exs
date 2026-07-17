@@ -25,4 +25,48 @@ defmodule Pluggy.OAS.SpecTest do
       assert Spec.response_key_strings(%{"paths" => %{}}) == []
     end
   end
+
+  describe "struct_fields/1" do
+    test "returns sorted, deduped snake_case atoms from properties" do
+      schema = %{"properties" => %{"itemId" => %{}, "currencyCode" => %{}, "id" => %{}}}
+      assert Spec.struct_fields(schema) == [:currency_code, :id, :item_id]
+    end
+
+    test "returns [] when there are no properties" do
+      assert Spec.struct_fields(%{"enum" => ["A"]}) == []
+    end
+  end
+
+  describe "enum_values/1" do
+    test "returns the enum list" do
+      assert Spec.enum_values(%{"enum" => ["A", "B"]}) == ["A", "B"]
+    end
+
+    test "returns [] when not an enum" do
+      assert Spec.enum_values(%{"properties" => %{}}) == []
+    end
+  end
+
+  describe "schema_moduledoc/2" do
+    test "includes description, example, and enum sections when present" do
+      doc =
+        Spec.schema_moduledoc("Thing", %{
+          "description" => "A thing",
+          "example" => %{"a" => 1},
+          "enum" => ["X", "Y"]
+        })
+
+      assert doc =~ "A thing"
+      assert doc =~ "## Example"
+      assert doc =~ "## Allowed values"
+      assert doc =~ "`\"X\"`"
+    end
+
+    test "falls back to a generic line and omits absent sections" do
+      doc = Spec.schema_moduledoc("Thing", %{})
+      assert doc =~ "`Thing` schema"
+      refute doc =~ "## Example"
+      refute doc =~ "## Allowed values"
+    end
+  end
 end

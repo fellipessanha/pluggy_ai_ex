@@ -23,6 +23,63 @@ defmodule Pluggy.OAS.Spec do
   @spec load!() :: map()
   def load!, do: path() |> File.read!() |> JSON.decode!()
 
+  @doc "The `components.schemas` map from a decoded spec (`%{}` if absent)."
+  @spec schemas(map()) :: map()
+  def schemas(%{} = doc), do: get_in(doc, ["components", "schemas"]) || %{}
+
+  @doc """
+  Sorted, deduped snake_case field atoms for an object schema's `properties`.
+
+  Uses the same `Macro.underscore/1` transform as `Pluggy.OAS.KeyConversion`, so the atoms
+  line up with runtime `Pluggy.KeyTransform.to_snake/1` output — a decoded response map can be
+  poured straight into the generated struct.
+  """
+  @spec struct_fields(map()) :: [atom()]
+  def struct_fields(%{"properties" => props}) when is_map(props) do
+    props
+    |> Map.keys()
+    |> Enum.map(&(&1 |> Macro.underscore() |> String.to_atom()))
+    |> Enum.uniq()
+    |> Enum.sort()
+  end
+
+  def struct_fields(_schema), do: []
+
+  @doc "Allowed values for a string-enum schema (`[]` if not an enum)."
+  @spec enum_values(map()) :: [String.t()]
+  def enum_values(%{"enum" => values}) when is_list(values), do: values
+  def enum_values(_schema), do: []
+
+  @doc """
+  Builds the `@moduledoc` string for a schema: `description`, an `## Example` section (when the
+  schema has a top-level `example`), and an `## Allowed values` list (for enum schemas).
+  """
+  @spec schema_moduledoc(String.t(), map()) :: String.t()
+  def schema_moduledoc(name, %{} = schema) do
+    [
+      schema["description"] || "`#{name}` schema from the Pluggy OpenAPI spec.",
+      example_section(schema["example"]),
+      enum_section(enum_values(schema))
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n\n")
+  end
+
+  # Raw OAS example rendered as an indented Elixir code block.
+  # ponytail: raw (camelCase) example via inspect — stdlib JSON has no pretty-printer and this
+  # is dependency-free. Snake-case/JSON rendering only if the doc mismatch ever matters.
+  defp example_section(nil), do: nil
+
+  defp example_section(example) do
+    body = example |> inspect(pretty: true, limit: :infinity) |> String.replace("\n", "\n    ")
+    "## Example\n\n    " <> body
+  end
+
+  defp enum_section([]), do: nil
+
+  defp enum_section(values),
+    do: "## Allowed values\n\n" <> Enum.map_join(values, "\n", &"  * `#{inspect(&1)}`")
+
   @doc """
   Returns the sorted, deduped list of every raw (camelCase) key reachable from a
   response body.
