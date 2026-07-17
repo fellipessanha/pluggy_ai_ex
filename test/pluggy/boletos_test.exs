@@ -81,7 +81,7 @@ defmodule Pluggy.BoletosTest do
     test "creates a boleto connection from an item and returns it" do
       client = build_client()
 
-      assert {:ok, %{id: "boleto-conn-uuid-001", boleto_id: "boleto-uuid-001"}} =
+      assert {:ok, %{id: "boleto-conn-uuid-001", connector_id: 201}} =
                Boletos.create_connection_from_item(client, %{item_id: "item-uuid-001"})
     end
   end

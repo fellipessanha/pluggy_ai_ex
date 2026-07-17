@@ -13,10 +13,14 @@ defmodule Pluggy.KeyTransformTest do
     end
 
     test "converts nested maps recursively" do
-      input = %{"paymentData" => %{"refNumber" => 1, "bankCode" => "001"}}
+      input = %{"bankData" => %{"transferNumber" => 1, "closingBalance" => "001"}}
 
-      assert %{payment_data: %{ref_number: 1, bank_code: "001"}} =
+      assert %{bank_data: %{transfer_number: 1, closing_balance: "001"}} =
                KeyTransform.to_snake(input)
+    end
+
+    test "leaves keys unknown to the OpenAPI spec as strings" do
+      assert %{"notAPluggyKey" => 1} == KeyTransform.to_snake(%{"notAPluggyKey" => 1})
     end
 
     test "converts lists of maps" do
@@ -25,9 +29,9 @@ defmodule Pluggy.KeyTransformTest do
     end
 
     test "handles lists nested inside maps" do
-      input = %{"results" => [%{"accountId" => "x"}, %{"accountId" => "y"}]}
+      input = %{"results" => [%{"itemId" => "x"}, %{"itemId" => "y"}]}
 
-      assert %{results: [%{account_id: "x"}, %{account_id: "y"}]} =
+      assert %{results: [%{item_id: "x"}, %{item_id: "y"}]} =
                KeyTransform.to_snake(input)
     end
 

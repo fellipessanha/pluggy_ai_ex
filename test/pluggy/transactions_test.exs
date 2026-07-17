@@ -131,7 +131,7 @@ defmodule Pluggy.TransactionsTest do
               JSON.encode!(%{
                 "results" => [%{"id" => "txn-uuid-001"}],
                 "total" => 2,
-                "nextCursor" => "cursor-token-abc"
+                "next" => "cursor-token-abc"
               })
             )
         end

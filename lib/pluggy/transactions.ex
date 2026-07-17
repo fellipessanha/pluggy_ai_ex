@@ -78,9 +78,9 @@ defmodule Pluggy.Transactions do
   The second argument accepts either an account ID string or an account map —
   the `:id` field is extracted automatically.
 
-  For `:v2` (default): Returns `{:ok, response, next_cursor}` where `next_cursor`
-  is the string token from `response.next_cursor`, or `nil` when there are no more
-  pages. Pass the token as `:after` in the next call.
+  For `:v2` (default): Returns `{:ok, response, next}` where `next` is the string
+  token from `response.next`, or `nil` when there are no more pages. Pass the
+  token as `:after` in the next call.
 
   For `:v1` (legacy): Returns `{:ok, response, cursor}` where `cursor` is a
   `%Pluggy.HTTP.Cursor{}` when more pages are available, or `nil` when on the last
@@ -103,7 +103,7 @@ defmodule Pluggy.Transactions do
 
       :v2 ->
         case list(client, account_id, [{:version, :v2} | opts]) do
-          {:ok, response} -> {:ok, response, Map.get(response, :next_cursor)}
+          {:ok, response} -> {:ok, response, Map.get(response, :next)}
           {:error, _} = error -> error
         end
     end

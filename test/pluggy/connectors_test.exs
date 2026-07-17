@@ -128,14 +128,14 @@ defmodule Pluggy.ConnectorsTest do
     test "validates connector credentials" do
       client = build_client()
       params = %{user: "test", password: "pass"}
-      assert {:ok, %{is_valid: true}} = Connectors.validate(client, 201, params)
+      assert {:ok, %{errors: []}} = Connectors.validate(client, 201, params)
     end
   end
 
   describe "validate!/3" do
     test "returns unwrapped result" do
       client = build_client()
-      assert %{is_valid: true} = Connectors.validate!(client, 201, %{user: "test"})
+      assert %{errors: []} = Connectors.validate!(client, 201, %{user: "test"})
     end
   end
 end

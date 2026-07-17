@@ -44,7 +44,7 @@ defmodule Pluggy.Test.Fixtures do
   end
 
   def connector_validation do
-    %{"isValid" => true}
+    %{"parameters" => %{"user" => "test"}, "errors" => []}
   end
 
   # --- Items ---
@@ -108,7 +108,7 @@ defmodule Pluggy.Test.Fixtures do
   # --- Transactions ---
 
   def transactions_v2 do
-    %{"results" => [transaction()], "total" => 1, "nextCursor" => nil}
+    %{"results" => [transaction()], "total" => 1, "next" => nil}
   end
 
   def transactions do
@@ -197,7 +197,7 @@ defmodule Pluggy.Test.Fixtures do
     %{
       "id" => "boleto-conn-uuid-001",
       "itemId" => "item-uuid-001",
-      "boletoId" => "boleto-uuid-001"
+      "connectorId" => 201
     }
   end
 
