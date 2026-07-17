@@ -58,22 +58,53 @@ defmodule Pluggy.OAS.Spec do
   def schema_moduledoc(name, %{} = schema) do
     [
       schema["description"] || "`#{name}` schema from the Pluggy OpenAPI spec.",
-      example_section(schema["example"]),
+      example_section(name, schema),
       enum_section(enum_values(schema))
     ]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n\n")
   end
 
-  # Raw OAS example rendered as an indented Elixir code block.
-  # ponytail: raw (camelCase) example via inspect — stdlib JSON has no pretty-printer and this
-  # is dependency-free. Snake-case/JSON rendering only if the doc mismatch ever matters.
-  defp example_section(nil), do: nil
+  # Renders the OAS `example` as an indented Elixir code block. Object schemas render as a
+  # populated struct literal (fields default to nil); everything else renders the example value.
+  # Keys are snake_cased for display only. ponytail: nested keys stay strings — this is doc text,
+  # not decoded data, so there's no reason to mint atoms (the BEAM atom table never GCs). The
+  # struct's own field atoms already exist from its `defstruct`, so reusing them costs nothing.
+  defp example_section(name, %{"example" => example} = schema) when example != nil do
+    rendered =
+      if is_map(example) and is_map_key(schema, "properties") do
+        render_struct(name, struct_fields(schema), deep_snake(example))
+      else
+        inspect(deep_snake(example), pretty: true, limit: :infinity)
+      end
 
-  defp example_section(example) do
-    body = example |> inspect(pretty: true, limit: :infinity) |> String.replace("\n", "\n    ")
-    "## Example\n\n    " <> body
+    "## Example\n\n    " <> String.replace(rendered, "\n", "\n    ")
   end
+
+  defp example_section(_name, _schema), do: nil
+
+  # `%Pluggy.Schemas.<Name>{...}` with every field on its own line in `fields` order (sorted,
+  # matching the struct definition), populated from the snake_cased example or defaulting to nil.
+  # Rendered by hand rather than inspecting a map so the ordering is deterministic — the struct
+  # module doesn't exist yet at this point in compilation, so we can't inspect a real struct.
+  defp render_struct(name, fields, example) do
+    body =
+      Enum.map_join(fields, ",\n", fn field ->
+        value =
+          example |> Map.get(Atom.to_string(field)) |> inspect(pretty: true, limit: :infinity)
+
+        "  #{field}: #{String.replace(value, "\n", "\n  ")}"
+      end)
+
+    "%Pluggy.Schemas.#{name}{\n#{body}\n}"
+  end
+
+  defp deep_snake(%{} = map), do: Map.new(map, fn {k, v} -> {snake_key(k), deep_snake(v)} end)
+  defp deep_snake(list) when is_list(list), do: Enum.map(list, &deep_snake/1)
+  defp deep_snake(other), do: other
+
+  defp snake_key(k) when is_binary(k), do: Macro.underscore(k)
+  defp snake_key(k), do: k
 
   defp enum_section([]), do: nil
 

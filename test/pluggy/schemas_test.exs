@@ -34,9 +34,12 @@ defmodule Pluggy.SchemasTest do
   end
 
   describe "moduledocs" do
-    test "carry the schema description and example" do
-      {:docs_v1, _, _, _, %{"en" => doc}, _, _} = Code.fetch_docs(Pluggy.Schemas.Item)
+    test "render the example as a populated struct literal" do
+      {:docs_v1, _, _, _, %{"en" => doc}, _, _} = Code.fetch_docs(Pluggy.Schemas.Transaction)
       assert doc =~ "## Example"
+      assert doc =~ "%Pluggy.Schemas.Transaction{"
+      assert doc =~ "currency_code: \"BRL\""
+      assert doc =~ "provider_id: nil"
     end
   end
 end

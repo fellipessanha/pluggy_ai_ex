@@ -62,6 +62,34 @@ defmodule Pluggy.OAS.SpecTest do
       assert doc =~ "`\"X\"`"
     end
 
+    test "renders an object example as a struct literal with snake_case fields" do
+      doc =
+        Spec.schema_moduledoc("Thing", %{
+          "properties" => %{"itemId" => %{}, "bankData" => %{}},
+          "example" => %{"itemId" => "abc", "bankData" => %{"transferNumber" => "1"}}
+        })
+
+      assert doc =~ "%Pluggy.Schemas.Thing{"
+      assert doc =~ "item_id: \"abc\""
+      # absent field defaults to nil
+      assert doc =~ "bank_data: %{\"transfer_number\" => \"1\"}"
+    end
+
+    test "nested example keys are snake_case strings, not atoms" do
+      before = :erlang.system_info(:atom_count)
+
+      Spec.schema_moduledoc("Thing", %{
+        "properties" => %{"id" => %{}},
+        "example" => %{
+          "id" => "x",
+          "someBrandNewNestedKey12345" => %{"anotherFreshKey67890" => 1}
+        }
+      })
+
+      # rendering doc text must not mint atoms for arbitrary example keys
+      assert :erlang.system_info(:atom_count) == before
+    end
+
     test "falls back to a generic line and omits absent sections" do
       doc = Spec.schema_moduledoc("Thing", %{})
       assert doc =~ "`Thing` schema"
