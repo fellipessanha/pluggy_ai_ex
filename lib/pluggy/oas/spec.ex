@@ -45,6 +45,42 @@ defmodule Pluggy.OAS.Spec do
 
   def struct_fields(_schema), do: []
 
+  @doc """
+  `{field_atom, quoted_type}` pairs for an object schema, sorted by field (aligned with
+  `struct_fields/1`), for use in the generated `@type t`.
+
+  Maps each property's OpenAPI `type` to an Elixir type (`string` → `String.t()`, `number` →
+  `number()`, `array` → `list()`, `object` → `map()`, etc.). `$ref`/composed properties with no
+  `type` become `term()`. Every type is nilable since a bare `defstruct` defaults fields to nil.
+  """
+  @spec struct_field_types(map()) :: [{atom(), Macro.t()}]
+  def struct_field_types(%{"properties" => props}) when is_map(props) do
+    props
+    |> Enum.map(fn {k, v} -> {k |> Macro.underscore() |> String.to_atom(), field_type(v)} end)
+    |> Enum.uniq_by(&elem(&1, 0))
+    |> Enum.sort_by(&elem(&1, 0))
+  end
+
+  def struct_field_types(_schema), do: []
+
+  # OAS `type` (a string, or an array like ["string","null"] in 3.1) -> quoted Elixir type.
+  defp field_type(%{"type" => type}), do: nilable(base_type(scalar(type)))
+  defp field_type(_prop), do: quote(do: term())
+
+  defp scalar(type) when is_list(type), do: Enum.find(type, &(&1 != "null"))
+  defp scalar(type), do: type
+
+  defp base_type("string"), do: quote(do: String.t())
+  defp base_type("integer"), do: quote(do: integer())
+  defp base_type("number"), do: quote(do: number())
+  defp base_type("boolean"), do: quote(do: boolean())
+  defp base_type("array"), do: quote(do: list())
+  defp base_type("object"), do: quote(do: map())
+  defp base_type(_type), do: quote(do: term())
+
+  defp nilable({:term, _, _} = term), do: term
+  defp nilable(type), do: quote(do: unquote(type) | nil)
+
   @doc "Allowed values for a string-enum schema (`[]` if not an enum)."
   @spec enum_values(map()) :: [String.t()]
   def enum_values(%{"enum" => values}) when is_list(values), do: values

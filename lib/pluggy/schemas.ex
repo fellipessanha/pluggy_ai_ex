@@ -16,26 +16,29 @@ defmodule Pluggy.Schemas do
   them on the next compile (wired via `@external_resource`).
   """
 
-  @external_resource Pluggy.OAS.Spec.path()
-  @schemas Pluggy.OAS.Spec.load!() |> Pluggy.OAS.Spec.schemas()
+  alias Pluggy.OAS.Spec
+
+  @external_resource Spec.path()
+  @schemas Spec.load!() |> Spec.schemas()
 
   for {name, schema} <- @schemas do
-    mod = Module.concat(Pluggy.Schemas, name)
-    moduledoc = Pluggy.OAS.Spec.schema_moduledoc(name, schema)
+    mod = Module.concat(__MODULE__, name)
+    moduledoc = Spec.schema_moduledoc(name, schema)
 
     body =
       cond do
         Map.has_key?(schema, "properties") ->
-          fields = Pluggy.OAS.Spec.struct_fields(schema)
+          fields = Spec.struct_fields(schema)
+          types = Spec.struct_field_types(schema)
 
           quote do
             @moduledoc unquote(moduledoc)
-            @type t :: %__MODULE__{}
+            @type t :: %__MODULE__{unquote_splicing(types)}
             defstruct unquote(fields)
           end
 
         Map.has_key?(schema, "enum") ->
-          values = Pluggy.OAS.Spec.enum_values(schema)
+          values = Spec.enum_values(schema)
 
           quote do
             @moduledoc unquote(moduledoc)

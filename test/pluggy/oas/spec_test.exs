@@ -37,6 +37,39 @@ defmodule Pluggy.OAS.SpecTest do
     end
   end
 
+  describe "struct_field_types/1" do
+    test "maps OAS types to nilable Elixir types, sorted by field" do
+      schema = %{
+        "properties" => %{
+          "itemId" => %{"type" => "string"},
+          "balance" => %{"type" => "number"},
+          "active" => %{"type" => "boolean"},
+          "tags" => %{"type" => "array"},
+          "meta" => %{"$ref" => "#/components/schemas/Meta"},
+          "birthDate" => %{"type" => ["string", "null"]}
+        }
+      }
+
+      rendered =
+        schema
+        |> Spec.struct_field_types()
+        |> Enum.map(fn {field, ast} -> {field, Macro.to_string(ast)} end)
+
+      assert rendered == [
+               {:active, "boolean() | nil"},
+               {:balance, "number() | nil"},
+               {:birth_date, "String.t() | nil"},
+               {:item_id, "String.t() | nil"},
+               {:meta, "term()"},
+               {:tags, "list() | nil"}
+             ]
+    end
+
+    test "returns [] when there are no properties" do
+      assert Spec.struct_field_types(%{"enum" => ["A"]}) == []
+    end
+  end
+
   describe "enum_values/1" do
     test "returns the enum list" do
       assert Spec.enum_values(%{"enum" => ["A", "B"]}) == ["A", "B"]
@@ -76,18 +109,21 @@ defmodule Pluggy.OAS.SpecTest do
     end
 
     test "nested example keys are snake_case strings, not atoms" do
-      before = :erlang.system_info(:atom_count)
+      doc =
+        Spec.schema_moduledoc("Thing", %{
+          "properties" => %{"metadata" => %{}},
+          "example" => %{
+            "metadata" => %{"someBrandNewNestedKey12345" => %{"anotherFreshKey67890" => 1}}
+          }
+        })
 
-      Spec.schema_moduledoc("Thing", %{
-        "properties" => %{"id" => %{}},
-        "example" => %{
-          "id" => "x",
-          "someBrandNewNestedKey12345" => %{"anotherFreshKey67890" => 1}
-        }
-      })
+      # nested map value rendered with snake_case string keys (display only)...
+      assert doc =~ "\"some_brand_new_nested_key12345\" => %{\"another_fresh_key67890\" => 1}"
 
-      # rendering doc text must not mint atoms for arbitrary example keys
-      assert :erlang.system_info(:atom_count) == before
+      # ...and those keys were never interned as atoms (the BEAM atom table never GCs)
+      assert_raise ArgumentError, fn ->
+        String.to_existing_atom("some_brand_new_nested_key12345")
+      end
     end
 
     test "falls back to a generic line and omits absent sections" do

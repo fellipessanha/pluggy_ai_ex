@@ -1,6 +1,8 @@
 defmodule Pluggy.SchemasTest do
   use ExUnit.Case, async: true
 
+  alias Pluggy.Schemas.WebhookEventType
+
   describe "object schemas" do
     test "generate a struct with snake_case fields" do
       account = %Pluggy.Schemas.Account{}
@@ -14,14 +16,24 @@ defmodule Pluggy.SchemasTest do
       assert account.id == "abc"
       assert account.item_id == "def"
     end
+
+    test "define @type t with per-field OAS types, not bare term()" do
+      {:ok, types} = Code.Typespec.fetch_types(Pluggy.Schemas.Investment)
+      {:type, {:t, ast, _}} = Enum.find(types, fn {:type, {name, _, _}} -> name == :t end)
+      rendered = Macro.to_string(Code.Typespec.type_to_quoted({:t, ast, []}))
+
+      assert rendered =~ "balance: number() | nil"
+      assert rendered =~ "id: String.t() | nil"
+      assert rendered =~ "tax_exempt: boolean() | nil"
+    end
   end
 
   describe "enum schemas" do
     test "expose values/0 and have no struct" do
-      values = Pluggy.Schemas.WebhookEventType.values()
+      values = WebhookEventType.values()
       assert is_list(values)
       refute Enum.empty?(values)
-      refute function_exported?(Pluggy.Schemas.WebhookEventType, :__struct__, 0)
+      refute function_exported?(WebhookEventType, :__struct__, 0)
     end
   end
 
