@@ -42,7 +42,7 @@ defmodule Pluggy.UnwrapTest do
       client = %{client | req: Unwrap.attach(client.req, :results)}
 
       assert {:ok, [%{id: "account-uuid-001"}]} =
-               Pluggy.Accounts.list(client, "item-uuid-001")
+               Pluggy.Account.list(client, "item-uuid-001")
     end
 
     test "passes through non-paginated response unchanged" do
@@ -50,7 +50,7 @@ defmodule Pluggy.UnwrapTest do
       client = %{client | req: Unwrap.attach(client.req, :results)}
 
       assert {:ok, %{id: "account-uuid-001", balance: 1234.56}} =
-               Pluggy.Accounts.get(client, "account-uuid-001")
+               Pluggy.Account.get(client, "account-uuid-001")
     end
 
     test "passes through response with results but no pagination keys" do
@@ -58,7 +58,7 @@ defmodule Pluggy.UnwrapTest do
       client = %{client | req: Unwrap.attach(client.req, :results)}
 
       assert {:ok, %{results: [%{id: "stmt-uuid-001"}]}} =
-               Pluggy.Accounts.statements(client, "account-uuid-001")
+               Pluggy.Account.statements(client, "account-uuid-001")
     end
   end
 
