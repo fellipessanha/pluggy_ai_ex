@@ -2,8 +2,8 @@ defmodule Pluggy.HTTP do
   @moduledoc """
   Low-level HTTP interface and cursor-based pagination for the Pluggy API.
 
-  Most users should call the resource modules (`Pluggy.Accounts`,
-  `Pluggy.Transactions`, etc.) rather than using this module directly.
+  Most users should call the generated resource modules (`Pluggy.Account`,
+  `Pluggy.Transaction`, etc.) rather than using this module directly.
   This module is primarily useful for its pagination helpers:
 
     * `with_cursor/1` — advance a `Pluggy.HTTP.Cursor` to fetch the next page
@@ -17,7 +17,7 @@ defmodule Pluggy.HTTP do
   `{:ok, response, cursor}` tuples. The `cursor` is a `Pluggy.HTTP.Cursor`
   struct that you can pass back to `with_cursor/1` to fetch successive pages.
 
-      fetcher = fn page -> Pluggy.Connectors.list(client, page: page) end
+      fetcher = fn page -> Pluggy.Transaction.list(client, account_id, page: page) end
       {:ok, first_page, cursor} = Pluggy.HTTP.with_cursor(fetcher)
       {:ok, second_page, nil}   = Pluggy.HTTP.with_cursor(cursor)
   """
@@ -101,7 +101,7 @@ defmodule Pluggy.HTTP do
 
   ## Examples
 
-      fetcher = fn page -> Pluggy.Connectors.list(client, page: page) end
+      fetcher = fn page -> Pluggy.Transaction.list(client, account_id, page: page) end
       {:ok, response, cursor} = Pluggy.HTTP.with_cursor(fetcher)
       {:ok, next_response, nil} = Pluggy.HTTP.with_cursor(cursor)
 
@@ -136,7 +136,7 @@ defmodule Pluggy.HTTP do
 
   ## Examples
 
-      {:ok, data, cursor} = Pluggy.Connectors.list_with_cursor(client)
+      {:ok, data, cursor} = Pluggy.Transaction.list_with_cursor(client, account_id)
 
       {:ok, data, cursor}
       |> Pluggy.HTTP.stream_results()
