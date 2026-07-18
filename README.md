@@ -75,22 +75,26 @@ session = Pluggy.Session.with_item(session, item_data)
 
 ## API modules
 
+The `Pluggy.<Tag>` resource modules below are **generated at compile time** from
+`priv/oas3.json`, one per OpenAPI tag (see `Pluggy.Endpoints`).
+
 | Module                | Description                                                 |
 | --------------------- | ----------------------------------------------------------- |
 | `Pluggy.Client`       | Authentication and client creation                          |
-| `Pluggy.Connectors`   | List, search, and validate financial institution connectors |
+| `Pluggy.Connector`    | List, search, and validate financial institution connectors |
 | `Pluggy.Items`        | Create, update, delete bank connections                     |
-| `Pluggy.Accounts`     | List accounts and statements for an item                    |
-| `Pluggy.Transactions` | List and update transactions                                |
-| `Pluggy.Investments`  | List investments and investment transactions                |
+| `Pluggy.Account`      | List accounts, balances, and statements for an item         |
+| `Pluggy.Transaction`  | List and update transactions                                |
+| `Pluggy.Investment`   | List investments and investment transactions                |
 | `Pluggy.Identity`     | Retrieve identity/KYC data                                  |
-| `Pluggy.Loans`        | List loan data                                              |
-| `Pluggy.Bills`        | List and retrieve bills for an item                         |
-| `Pluggy.Categories`   | List transaction categories and manage category rules       |
-| `Pluggy.Merchants`    | Retrieve merchant data                                      |
-| `Pluggy.Boletos`      | Create and retrieve Brazilian boleto payment slips          |
-| `Pluggy.SmartTransfers` | Schedule and manage automated smart transfers             |
-| `Pluggy.Webhooks`     | Create and manage webhooks for real-time event notifications |
+| `Pluggy.Loan`         | List loan data                                              |
+| `Pluggy.Bill`         | List and retrieve bills for an item                         |
+| `Pluggy.Category`     | List transaction categories and manage category rules       |
+| `Pluggy.Consent`      | List and retrieve open-finance consents                     |
+| `Pluggy.Merchant`     | Retrieve merchant data                                      |
+| `Pluggy.BoletoManagement` | Create and retrieve Brazilian boleto payment slips      |
+| `Pluggy.SmartTransfer` | Schedule and manage automated smart transfers              |
+| `Pluggy.Webhook`      | Create and manage webhooks for real-time event notifications |
 | `Pluggy.Payments.Customers`  | Manage payment customers (individuals and businesses) |
 | `Pluggy.Payments.Recipients` | Manage payment recipients (payment destinations)      |
 | `Pluggy.Payments.Requests`   | Create and manage payment initiation requests         |
