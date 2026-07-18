@@ -195,10 +195,8 @@ defmodule Pluggy.Unwrap do
 
   defp unwrap_step({req, %Req.Response{status: status, body: _body} = response})
        when status in 200..299 do
-    case apply_mode(req.options[:pluggy_unwrap_mode], {req, response}) do
-      {:ok, unwrapped} -> {req, %{response | body: unwrapped}}
-      _ -> {req, response}
-    end
+    {:ok, unwrapped} = apply_mode(req.options[:pluggy_unwrap_mode], {req, response})
+    {req, %{response | body: unwrapped}}
   end
 
   defp unwrap_step({req, response}), do: {req, response}
