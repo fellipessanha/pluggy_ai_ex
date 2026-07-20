@@ -250,6 +250,100 @@ defmodule Pluggy.OAS.Spec do
     resolve_collisions(ops)
   end
 
+  @doc """
+  The final endpoint surface for the generator: `operations/1` grouped so that
+  version variants of one endpoint collapse into a single dispatch function.
+
+  Returns a list of entries, each either:
+
+    * `%{kind: :single, module: mod, op: op}` — one operation, one function.
+    * `%{kind: :family, module: mod, fun: atom, default: version, members: [{version, op}]}` —
+      several versions of one endpoint (same method + version-stripped path + arg
+      shape), served by one function that dispatches on a `version:` opt.
+  """
+  @spec endpoints(map()) :: [map()]
+  def endpoints(%{} = doc) do
+    doc
+    |> operations()
+    |> Enum.group_by(& &1.module)
+    |> Enum.flat_map(fn {_module, mod_ops} -> module_endpoints(mod_ops) end)
+  end
+
+  defp module_endpoints(mod_ops) do
+    {families, singles} =
+      mod_ops
+      |> Enum.group_by(& &1.family_key)
+      |> Map.values()
+      |> Enum.split_with(&unifiable_family?/1)
+
+    entries =
+      Enum.map(families, &family_entry/1) ++
+        for(group <- singles, op <- group, do: %{kind: :single, module: op.module, op: op})
+
+    resolve_endpoint_collisions(entries)
+  end
+
+  # A family is unifiable only when its members are true version variants (>1
+  # distinct version) AND share the same positional arg shape — otherwise the
+  # user gets separate functions.
+  defp unifiable_family?([_single]), do: false
+
+  defp unifiable_family?(group) do
+    versions = group |> Enum.map(& &1.version) |> Enum.uniq()
+    length(versions) == length(group) and same_signature?(group)
+  end
+
+  defp same_signature?(group) do
+    sigs =
+      Enum.map(group, fn op ->
+        {Enum.map(op.path_params, & &1.key), Enum.map(op.required_query, & &1.key), op.body?}
+      end)
+
+    match?([_], Enum.uniq(sigs))
+  end
+
+  defp family_entry(group) do
+    members = group |> Enum.map(&{&1.version, &1}) |> Enum.sort_by(&elem(&1, 0))
+    rep = List.first(group)
+
+    %{
+      kind: :family,
+      module: rep.module,
+      fun: preferred_fun(rep.method, stripped_path(rep.path)),
+      default: group |> Enum.max_by(&version_num(&1.version)) |> Map.fetch!(:version),
+      members: members
+    }
+  end
+
+  defp version_num(version),
+    do: version |> Atom.to_string() |> String.trim_leading("v") |> String.to_integer()
+
+  # A family's base name could clash with a sibling function; fall back to the
+  # version-stripped resource segment (e.g. `:transactions`) if so.
+  defp resolve_endpoint_collisions(entries) do
+    counts = entries |> Enum.map(&endpoint_name/1) |> Enum.frequencies()
+    Enum.map(entries, &maybe_rename_family(&1, counts))
+  end
+
+  defp maybe_rename_family(%{kind: :family, fun: fun} = entry, counts) do
+    if counts[fun] > 1, do: %{entry | fun: family_fallback(entry)}, else: entry
+  end
+
+  defp maybe_rename_family(entry, _counts), do: entry
+
+  defp endpoint_name(%{kind: :family, fun: fun}), do: fun
+  defp endpoint_name(%{kind: :single, op: op}), do: op.fun
+
+  defp family_fallback(%{members: [{_v, op} | _]}) do
+    op.path
+    |> stripped_path()
+    |> String.trim_leading("/")
+    |> String.split("/")
+    |> List.last()
+    |> String.replace("-", "_")
+    |> String.to_atom()
+  end
+
   defp http_method?(m), do: m in ~w(get post put patch delete)
 
   defp normalize_operation(method, path, op, schemas) do
@@ -269,6 +363,8 @@ defmodule Pluggy.OAS.Spec do
       path: path,
       op_id: op["operationId"] || "#{method}_#{path}",
       preferred_fun: preferred_fun(method, path),
+      version: version_of(path),
+      family_key: {method, stripped_path(path)},
       path_params: path_params,
       required_query: required_query,
       optional_query: optional_query,
@@ -385,6 +481,20 @@ defmodule Pluggy.OAS.Spec do
   defp drop_version([h | t]), do: if(Regex.match?(~r/^v\d+$/, h), do: t, else: [h | t])
   defp drop_version([]), do: []
 
+  # The `v<n>` path segment as an atom, or `:v1` for the un-versioned (original) path.
+  defp version_of(path) do
+    case path |> String.trim_leading("/") |> String.split("/") do
+      [h | _] -> if Regex.match?(~r/^v\d+$/, h), do: String.to_atom(h), else: :v1
+      [] -> :v1
+    end
+  end
+
+  # Path with any leading `v<n>` segment removed, so version variants share a key.
+  defp stripped_path(path) do
+    segs = path |> String.trim_leading("/") |> String.split("/") |> drop_version()
+    "/" <> Enum.join(segs, "/")
+  end
+
   defp param_segment?("{" <> _ = s), do: String.ends_with?(s, "}")
   defp param_segment?(_), do: false
 
@@ -435,17 +545,24 @@ defmodule Pluggy.OAS.Spec do
   # -- Code generation ---------------------------------------------------------
 
   @doc false
-  # Quoted body for one endpoint module: moduledoc, id extractors, and per-op
-  # functions (base + bang, plus cursor variants for paginated list ops).
-  def endpoint_module_body(ops) do
-    moduledoc = ops |> List.first() |> Map.fetch!(:tag) |> endpoint_moduledoc()
-    blocks = id_helper_asts(ops) ++ Enum.flat_map(ops, &function_asts/1)
+  # Quoted body for one endpoint module from its grouped `endpoints/1` entries:
+  # moduledoc, id extractors, per-op functions, and version-dispatch functions.
+  def endpoint_module_body(entries) do
+    all_ops = Enum.flat_map(entries, &entry_ops/1)
+    moduledoc = all_ops |> List.first() |> Map.fetch!(:tag) |> endpoint_moduledoc()
+    blocks = id_helper_asts(all_ops) ++ Enum.flat_map(entries, &entry_asts/1)
 
     quote do
       @moduledoc unquote(moduledoc)
       (unquote_splicing(blocks))
     end
   end
+
+  defp entry_ops(%{kind: :single, op: op}), do: [op]
+  defp entry_ops(%{kind: :family, members: members}), do: Enum.map(members, &elem(&1, 1))
+
+  defp entry_asts(%{kind: :single, op: op}), do: function_asts(op)
+  defp entry_asts(%{kind: :family} = entry), do: version_family_asts(entry)
 
   defp endpoint_moduledoc(tag) do
     "`#{tag}` API endpoints, generated at compile time from the Pluggy OpenAPI " <>
@@ -533,6 +650,195 @@ defmodule Pluggy.OAS.Spec do
       end
 
     [cursor, bang]
+  end
+
+  # -- Version-family functions ------------------------------------------------
+
+  # One function dispatching on a `version:` opt to the matching version's op,
+  # plus its bang variant. (No cursor variant: versions can differ in their
+  # pagination model — v1 pages, v2 uses an `after` cursor.)
+  defp version_family_asts(entry) do
+    fun = entry.fun
+    args = family_head_args(entry)
+    default = entry.default
+    module = entry.module
+    versions = Enum.map(entry.members, &elem(&1, 0))
+
+    clauses =
+      Enum.map(entry.members, fn {version, op} ->
+        {:->, [], [[version], family_member_call(op)]}
+      end)
+
+    other = Macro.var(:other, nil)
+
+    fallback =
+      {:->, [],
+       [
+         [other],
+         quote(
+           do:
+             raise(
+               ArgumentError,
+               unquote(
+                 "unknown version for #{inspect(module)}.#{fun}, expected one of " <>
+                   "#{inspect(versions)}: "
+               ) <> inspect(unquote(other))
+             )
+         )
+       ]}
+
+    dispatch = {:case, [], [Macro.var(:version, nil), [do: clauses ++ [fallback]]]}
+
+    body =
+      quote do
+        {unquote(Macro.var(:version, nil)), unquote(Macro.var(:opts, nil))} =
+          Keyword.pop(
+            unquote(Macro.var(:opts, nil)),
+            :version,
+            Pluggy.api_version(unquote(module), unquote(fun), unquote(default))
+          )
+
+        unquote(dispatch)
+      end
+
+    bang_name = :"#{fun}!"
+
+    base =
+      quote do
+        @doc unquote(family_doc(entry))
+        @spec unquote(fun)(unquote_splicing(family_spec_types(entry))) ::
+                unquote(family_ok_type(entry))
+        def unquote(fun)(unquote_splicing(args)), do: unquote(body)
+      end
+
+    bang =
+      quote do
+        @doc unquote("Same as `#{fun}` but returns the value directly, raising on error.")
+        @spec unquote(bang_name)(unquote_splicing(family_spec_types(entry))) ::
+                unquote(family_bang_type(entry))
+        def unquote(bang_name)(unquote_splicing(args)) do
+          Pluggy.HTTP.unwrap_tuple!(unquote(fun)(unquote_splicing(family_call_args(entry))))
+        end
+      end
+
+    [base, bang]
+  end
+
+  # A member call always merges the caller's `opts` (the `version:` key already
+  # popped) into the query, so version-specific filters pass through.
+  defp family_member_call(op) do
+    http_opts =
+      [quote(do: {:params, unquote(family_query_ast(op))})] ++
+        if(op.body?, do: [quote(do: {:json, unquote(Macro.var(:attrs, nil))})], else: [])
+
+    quote do
+      Pluggy.HTTP.unquote(op.method)(
+        unquote(Macro.var(:client, nil)),
+        unquote(build_path(op.path)),
+        [unquote_splicing(http_opts)]
+      )
+    end
+  end
+
+  defp family_query_ast(op) do
+    req = for p <- op.required_query, do: quote(do: {unquote(p.key), unquote(query_value(p))})
+    opts = Macro.var(:opts, nil)
+
+    if req == [], do: opts, else: quote(do: Keyword.merge([unquote_splicing(req)], unquote(opts)))
+  end
+
+  defp rep_op(entry), do: entry.members |> hd() |> elem(1)
+
+  defp family_head_args(entry) do
+    rep = rep_op(entry)
+
+    positional =
+      Enum.map(rep.path_params, &Macro.var(&1.key, nil)) ++
+        Enum.map(rep.required_query, &Macro.var(&1.key, nil)) ++
+        if(rep.body?, do: [Macro.var(:attrs, nil)], else: [])
+
+    [quote(do: %Pluggy.Client{} = unquote(Macro.var(:client, nil)))] ++
+      positional ++ [quote(do: unquote(Macro.var(:opts, nil)) \\ [])]
+  end
+
+  defp family_call_args(entry) do
+    rep = rep_op(entry)
+
+    [Macro.var(:client, nil)] ++
+      Enum.map(rep.path_params, &Macro.var(&1.key, nil)) ++
+      Enum.map(rep.required_query, &Macro.var(&1.key, nil)) ++
+      if(rep.body?, do: [Macro.var(:attrs, nil)], else: []) ++
+      [Macro.var(:opts, nil)]
+  end
+
+  defp family_spec_types(entry) do
+    rep = rep_op(entry)
+
+    [quote(do: Pluggy.Client.t())] ++
+      Enum.map(rep.path_params, fn _ -> quote(do: binary() | integer()) end) ++
+      Enum.map(rep.required_query, fn p ->
+        if p.extract?, do: quote(do: binary() | map()), else: quote(do: binary())
+      end) ++
+      if(rep.body?, do: [quote(do: map())], else: []) ++
+      [quote(do: keyword())]
+  end
+
+  defp family_ok_type(entry) do
+    quote(do: {:ok, unquote(family_response_union(entry))} | {:error, Pluggy.Error.t()})
+  end
+
+  defp family_bang_type(entry), do: family_response_union(entry)
+
+  defp family_response_union(entry) do
+    entry.members
+    |> Enum.map(fn {_v, op} -> response_type_ast(op) end)
+    |> Enum.uniq_by(&Macro.to_string/1)
+    |> union_ast()
+  end
+
+  defp union_ast([type]), do: type
+  defp union_ast([type | rest]), do: quote(do: unquote(type) | unquote(union_ast(rest)))
+
+  defp family_doc(entry) do
+    rep = rep_op(entry)
+    versions = Enum.map(entry.members, &elem(&1, 0))
+
+    version_line =
+      "  * `opts` — optional query parameters, plus `version:` (one of " <>
+        "#{inspect(versions)}, default `#{inspect(entry.default)}`) selecting the API version:"
+
+    per_version =
+      Enum.map(entry.members, fn {version, op} ->
+        method = op.method |> to_string() |> String.upcase()
+        filters = Enum.map_join(op.optional_query, ", ", &"`#{&1.key}`")
+        filters = if filters == "", do: "", else: " — filters: #{filters}"
+        "    * `#{inspect(version)}` → `#{method} #{op.path}`#{filters}"
+      end)
+
+    params =
+      ["  * `client` — a `Pluggy.Client` struct."] ++
+        Enum.map(rep.path_params, &param_line/1) ++
+        Enum.map(rep.required_query, &param_line/1) ++
+        [version_line | per_version]
+
+    summary =
+      rep.summary ||
+        "`#{rep.method |> to_string() |> String.upcase()} #{stripped_path(rep.path)}` (versioned)."
+
+    [summary, "## Parameters\n\n" <> Enum.join(params, "\n"), family_returns(entry)]
+    |> Enum.join("\n\n")
+  end
+
+  defp family_returns(entry) do
+    types =
+      entry.members
+      |> Enum.map(fn {_v, op} -> op.response_schema end)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+      |> Enum.map_join(" | ", &"`Pluggy.Schemas.#{&1}.t()`")
+
+    types = if types == "", do: "`map()`", else: types
+    "## Returns\n\n`{:ok, #{types}}` on success, or `{:error, Pluggy.Error.t()}`."
   end
 
   # -- Argument / call ASTs ----------------------------------------------------

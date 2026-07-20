@@ -74,12 +74,15 @@ Kino.DataTable.new(accounts)
 
 ## Transactions
 
-Pass an account map directly — no need to extract the ID manually.
+Pass an account map directly — no need to extract the ID manually. `list/3`
+serves both API versions; pass `version: :v1` or `:v2` (default `:v2`) to choose.
 
 ```elixir
 transactions_map =
   for account <- accounts, into: %{} do
-    transactions = Pluggy.Transaction.transactions_list(client, account) |> Pluggy.Unwrap.results()
+    transactions =
+      Pluggy.Transaction.list(client, account, version: :v1) |> Pluggy.Unwrap.results()
+
     {account.type, transactions}
   end
 

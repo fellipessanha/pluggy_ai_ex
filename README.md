@@ -84,7 +84,7 @@ The `Pluggy.<Tag>` resource modules below are **generated at compile time** from
 | `Pluggy.Connector`    | List, search, and validate financial institution connectors |
 | `Pluggy.Items`        | Create, update, delete bank connections                     |
 | `Pluggy.Account`      | List accounts, balances, and statements for an item         |
-| `Pluggy.Transaction`  | List and update transactions                                |
+| `Pluggy.Transaction`  | List (v1/v2 via `list(..., version: :v1)`) and update transactions |
 | `Pluggy.Investment`   | List investments and investment transactions                |
 | `Pluggy.Identity`     | Retrieve identity/KYC data                                  |
 | `Pluggy.Loan`         | List loan data                                              |

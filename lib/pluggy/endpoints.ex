@@ -36,16 +36,22 @@ defmodule Pluggy.Endpoints do
                "Payment Schedule"
              ])
 
-  @operations Spec.load!()
-              |> Spec.operations()
-              |> Enum.reject(&MapSet.member?(@skip_tags, &1.tag))
+  @skip_modules @skip_tags
+                |> Enum.map(&Module.concat(Pluggy, Spec.tag_module(&1)))
+                |> MapSet.new()
+
+  @endpoints Spec.load!()
+             |> Spec.endpoints()
+             |> Enum.reject(&MapSet.member?(@skip_modules, &1.module))
 
   @doc false
-  def operations, do: @operations
+  # The grouped endpoint surface actually generated (`:single` and `:family`
+  # entries), for introspection and tests.
+  def endpoints, do: @endpoints
 
-  @operations
+  @endpoints
   |> Enum.group_by(& &1.module)
-  |> Enum.each(fn {module, ops} ->
-    Module.create(module, Spec.endpoint_module_body(ops), Macro.Env.location(__ENV__))
+  |> Enum.each(fn {module, entries} ->
+    Module.create(module, Spec.endpoint_module_body(entries), Macro.Env.location(__ENV__))
   end)
 end

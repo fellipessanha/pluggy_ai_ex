@@ -190,6 +190,51 @@ defmodule Pluggy.OAS.SpecTest do
     end
   end
 
+  describe "version detection" do
+    setup do: {:ok, ops: Spec.operations(Spec.load!())}
+
+    test "tags each op with a version and a version-stripped family key", %{ops: ops} do
+      v1 = Enum.find(ops, &(&1.method == :get and &1.path == "/transactions"))
+      v2 = Enum.find(ops, &(&1.method == :get and &1.path == "/v2/transactions"))
+
+      assert v1.version == :v1
+      assert v2.version == :v2
+      # both strip to the same family key, so they group together
+      assert v1.family_key == v2.family_key
+      assert v1.family_key == {:get, "/transactions"}
+    end
+  end
+
+  describe "endpoints/1" do
+    setup do: {:ok, entries: Spec.endpoints(Spec.load!())}
+
+    test "collapses the v1/v2 transactions list into one :family entry", %{entries: entries} do
+      family =
+        Enum.find(entries, &(&1[:kind] == :family and &1.module == Pluggy.Transaction))
+
+      assert family.fun == :list
+      assert family.default == :v2
+      assert family.members |> Enum.map(&elem(&1, 0)) |> Enum.sort() == [:v1, :v2]
+    end
+
+    test "leaves non-versioned transaction ops as singles", %{entries: entries} do
+      singles =
+        for %{kind: :single, op: op} <- entries, op.module == Pluggy.Transaction, do: op.fun
+
+      assert :get in singles
+      assert :update in singles
+    end
+
+    test "does not falsely unify same-named ops on different resources", %{entries: entries} do
+      # POST /boletos and POST /boleto-connections both prefer :create but are
+      # different resources — they must stay separate singles, not a family.
+      boleto_families =
+        Enum.filter(entries, &(&1[:kind] == :family and &1.module == Pluggy.BoletoManagement))
+
+      assert boleto_families == []
+    end
+  end
+
   describe "operation_doc/1" do
     test "documents each parameter and renders a return example" do
       [op | _] =
