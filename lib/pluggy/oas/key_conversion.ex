@@ -12,7 +12,7 @@ defmodule Pluggy.OAS.KeyConversion do
   """
 
   @external_resource Pluggy.OAS.Spec.path()
-  @key_strings Pluggy.OAS.Spec.load!() |> Pluggy.OAS.Spec.response_key_strings()
+  @key_strings Pluggy.OAS.Spec.load!() |> Pluggy.OAS.ResponseKeys.response_key_strings()
 
   @doc """
   Converts a known response key string to its snake_case atom. Unknown keys are

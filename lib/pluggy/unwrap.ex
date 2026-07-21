@@ -132,7 +132,7 @@ defmodule Pluggy.Unwrap do
 
   ## Examples
 
-      Pluggy.Connectors.list_with_cursor(client)
+      Pluggy.Transaction.list_with_cursor(client, account_id)
       |> Pluggy.Unwrap.all_results()
       #=> [%{id: 201, ...}, %{id: 202, ...}, ...]
   """

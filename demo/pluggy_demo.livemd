@@ -34,7 +34,7 @@ client_secret = Kino.Input.read(client_secret_input)
 Fetch available connectors and display a simplified view.
 
 ```elixir
-{:ok, %{results: connectors}} = Pluggy.Connectors.list(client)
+{:ok, %{results: connectors}} = Pluggy.Connector.list(client)
 
 connectors_simplified =
   for %{name: name, id: id, products: products} <- connectors do
@@ -68,18 +68,21 @@ item = Pluggy.Connect.Kino.await_item(widget)
 Fetch the accounts for the connected item.
 
 ```elixir
-accounts = Pluggy.Accounts.list(client, item) |> Pluggy.Unwrap.results()
+accounts = Pluggy.Account.list(client, item) |> Pluggy.Unwrap.results()
 Kino.DataTable.new(accounts)
 ```
 
 ## Transactions
 
-Pass an account map directly — no need to extract the ID manually.
+Pass an account map directly — no need to extract the ID manually. `list/3`
+serves both API versions; pass `version: :v1` or `:v2` (default `:v2`) to choose.
 
 ```elixir
 transactions_map =
   for account <- accounts, into: %{} do
-    transactions = Pluggy.Transactions.list(client, account) |> Pluggy.Unwrap.results()
+    transactions =
+      Pluggy.Transaction.list(client, account, version: :v1) |> Pluggy.Unwrap.results()
+
     {account.type, transactions}
   end
 
@@ -112,15 +115,15 @@ Kino.DataTable.new(
 
 ## Investments
 
-Fetch investments for the item, then pass an investment map to get its transactions.
+Fetch investments for the item, then pass an investment ID to get its transactions.
 
 ```elixir
-investments = Pluggy.Investments.list(client, item) |> Pluggy.Unwrap.results()
+investments = Pluggy.Investment.list(client, item) |> Pluggy.Unwrap.results()
 Kino.DataTable.new(investments)
 ```
 
 ```elixir
 investment = hd(investments)
-inv_transactions = Pluggy.Investments.transactions(client, investment) |> Pluggy.Unwrap.results()
+inv_transactions = Pluggy.Investment.transactions(client, investment.id) |> Pluggy.Unwrap.results()
 Kino.DataTable.new(inv_transactions)
 ```
