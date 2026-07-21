@@ -21,7 +21,7 @@ defmodule Pluggy.Endpoints do
   `Pluggy.Payments.*` modules and `Pluggy.Auth` cover the skipped tags.
   """
 
-  alias Pluggy.OAS.Spec
+  alias Pluggy.OAS.{Codegen, Operation, Spec}
 
   @external_resource Spec.path()
 
@@ -37,11 +37,11 @@ defmodule Pluggy.Endpoints do
              ])
 
   @skip_modules @skip_tags
-                |> Enum.map(&Module.concat(Pluggy, Spec.tag_module(&1)))
+                |> Enum.map(&Module.concat(Pluggy, Operation.tag_module(&1)))
                 |> MapSet.new()
 
   @endpoints Spec.load!()
-             |> Spec.endpoints()
+             |> Operation.endpoints()
              |> Enum.reject(&MapSet.member?(@skip_modules, &1.module))
 
   @doc false
@@ -52,6 +52,6 @@ defmodule Pluggy.Endpoints do
   @endpoints
   |> Enum.group_by(& &1.module)
   |> Enum.each(fn {module, entries} ->
-    Module.create(module, Spec.endpoint_module_body(entries), Macro.Env.location(__ENV__))
+    Module.create(module, Codegen.endpoint_module_body(entries), Macro.Env.location(__ENV__))
   end)
 end
